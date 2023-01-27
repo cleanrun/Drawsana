@@ -54,6 +54,32 @@ open class DrawingToolForShapeWithTwoPoints: DrawingTool {
     // just end the shape normally.
     handleDragEnd(context: context, point: point)
   }
+    
+    /* Pinch Gesture recognizers */
+    public func handlePinchBegin(context: ToolOperationContext, startPoint: CGPoint, endPoint: CGPoint) {
+        shapeInProgress = makeShape()
+        shapeInProgress?.a = startPoint
+        shapeInProgress?.b = endPoint
+        shapeInProgress?.apply(userSettings: context.userSettings)
+    }
+    
+    public func handlePinchChange(context: ToolOperationContext, startPoint: CGPoint, endPoint: CGPoint) {
+        shapeInProgress?.a = startPoint
+        shapeInProgress?.b = endPoint
+    }
+    
+    public func handlePinchEnd(context: ToolOperationContext, startPoint: CGPoint, endPoint: CGPoint) {
+        guard var shape = shapeInProgress else { return }
+        shape.a = startPoint
+        shape.b = endPoint
+        context.operationStack.apply(operation: AddShapeOperation(shape: shape))
+        shapeInProgress = nil
+    }
+    
+    public func handlePinchCancel(context: ToolOperationContext, startPoint: CGPoint, endPoint: CGPoint) {
+        handlePinchEnd(context: context, startPoint: startPoint, endPoint: endPoint)
+    }
+    /* Pinch Gesture recognizers */
 
   public func renderShapeInProgress(transientContext: CGContext) {
     shapeInProgress?.render(in: transientContext)

@@ -155,6 +155,8 @@ public class DrawsanaView: UIView {
     userSettings.delegate = self
     isUserInteractionEnabled = true
     clipsToBounds = true
+      
+      isMultipleTouchEnabled = true
 
     layer.actions = [
       "contents": NSNull(),
@@ -206,8 +208,11 @@ public class DrawsanaView: UIView {
     selectionIndicatorView.layer.shadowOpacity = 1
     selectionIndicatorView.isHidden = true
 
-    let panGR = ImmediatePanGestureRecognizer(target: self, action: #selector(didPan(sender:)))
-    addGestureRecognizer(panGR)
+    //let panGR = ImmediatePanGestureRecognizer(target: self, action: #selector(didPan(sender:)))
+    //addGestureRecognizer(panGR)
+      
+      let pinchGR = UIPinchGestureRecognizer(target: self, action: #selector(didPinch(_:)))
+      addGestureRecognizer(pinchGR)
   }
 
   public override func layoutSubviews() {
@@ -323,6 +328,53 @@ public class DrawsanaView: UIView {
 
     applyToolSettingsChanges()
   }
+    
+    @objc private func didPinch(_ sender: UIPinchGestureRecognizer) {
+        autoreleasepool { _didPinch(sender) }
+    }
+
+    private func _didPinch(_ sender: UIPinchGestureRecognizer) {
+        guard sender.numberOfTouches == 2, let shapeTool = tool as? DrawingToolForShapeWithTwoPoints else { return }
+        
+        let updateUncommittedShapeBuffers: () -> Void = {
+          self.transientBufferWithShapeInProgress = DrawsanaUtilities.renderImage(size: self.drawing.size) {
+            self.transientBuffer?.draw(at: .zero)
+            self.tool?.renderShapeInProgress(transientContext: $0)
+          }
+          self.drawingContentView.layer.contents = self.transientBufferWithShapeInProgress?.cgImage
+          if self.tool?.isProgressive == true {
+            self.transientBuffer = self.transientBufferWithShapeInProgress
+          }
+        }
+        
+        let startPoint = sender.location(ofTouch: 0, in: self)
+        let endPoint = sender.location(ofTouch: 1, in: self)
+        
+        switch sender.state {
+        case .began:
+            if let persistentBuffer = persistentBuffer, let cgImage = persistentBuffer.cgImage {
+              transientBuffer = UIImage(
+                cgImage: cgImage,
+                scale: persistentBuffer.scale,
+                orientation: persistentBuffer.imageOrientation)
+            } else {
+              transientBuffer = nil
+            }
+            shapeTool.handlePinchBegin(context: toolOperationContext, startPoint: startPoint, endPoint: endPoint)
+            delegate?.drawsanaView(self, didStartDragWith: shapeTool)
+            updateUncommittedShapeBuffers()
+        case .changed:
+            shapeTool.handlePinchChange(context: toolOperationContext, startPoint: startPoint, endPoint: endPoint)
+            updateUncommittedShapeBuffers()
+        case .ended, .failed, .cancelled:
+            shapeTool.handlePinchEnd(context: toolOperationContext, startPoint: startPoint, endPoint: endPoint)
+            reapplyLayerContents()
+        default:
+            break
+        }
+        
+        applyToolSettingsChanges()
+    }
 
   // MARK: Making stuff show up
 
