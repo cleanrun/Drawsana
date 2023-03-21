@@ -53,7 +53,15 @@ class ImmediatePanGestureRecognizer: UIGestureRecognizer {
   }
 
   override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent) {
-    guard trackedTouch == nil, let firstTouch = touches.first, let view = view else { return }
+    guard trackedTouch == nil,
+          let firstTouch = touches.first,
+          touches.count <= 1,
+          let view = view
+    else {
+      state = .failed
+      return
+    }
+    
     trackedTouch = firstTouch
     startPoint = firstTouch.location(in: view)
     lastPoint = startPoint
@@ -68,8 +76,10 @@ class ImmediatePanGestureRecognizer: UIGestureRecognizer {
       state == .began || state == .changed,
       let view = view,
       let trackedTouch = trackedTouch,
-      touches.contains(trackedTouch) else
+      touches.contains(trackedTouch),
+      touches.count <= 1 else
     {
+      state = .failed
       return
     }
 
