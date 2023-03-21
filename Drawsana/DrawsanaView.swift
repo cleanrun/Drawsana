@@ -135,8 +135,18 @@ public class DrawsanaView: UIView {
   }
   
   private let interactiveOverlayContainerView = UIView()
+  
+  // MARK: Gesture Recognizers
+  
   private var immediatePanGestureRecognizer: ImmediatePanGestureRecognizer!
   private var pinchGestureRecognizer: UIPinchGestureRecognizer!
+  
+  /// This tuple is to store the last tracked Points of a drawing created from the pinch gesture.
+  /// Because most of the time, when the user lifts their fingers after performing a pinch gesture,
+  /// the gesure handler recognize only 1 touch was performed. So the ending state handlers
+  /// (in this case the `.ended`, `.failed`, or `.cancelled`) was never called and the
+  /// drawing is not saved.
+  private var lastTrackedPoints: (CGPoint, CGPoint)? = nil
   
   // MARK: Init
   
@@ -339,7 +349,16 @@ public class DrawsanaView: UIView {
   }
   
   private func _didPinch(_ sender: UIPinchGestureRecognizer) {
-    guard sender.numberOfTouches == 2, let shapeTool = tool as? DrawingToolForShapeWithTwoPoints, !(tool is PenTool) else { return }
+    guard let shapeTool = tool as? DrawingToolForShapeWithTwoPoints,
+          !(tool is PenTool)
+    else { return }
+    
+    if sender.numberOfTouches < 2 {
+      guard let lastTrackedPoints else { return }
+      shapeTool.handlePinchEnd(context: toolOperationContext, startPoint: lastTrackedPoints.0, endPoint: lastTrackedPoints.1)
+      reapplyLayerContents()
+      return
+    }
     
     let updateUncommittedShapeBuffers: () -> Void = {
       self.transientBufferWithShapeInProgress = DrawsanaUtilities.renderImage(size: self.drawing.size) {
@@ -354,6 +373,7 @@ public class DrawsanaView: UIView {
     
     let startPoint = sender.location(ofTouch: 0, in: self)
     let endPoint = sender.location(ofTouch: 1, in: self)
+    lastTrackedPoints = (startPoint, endPoint)
     
     switch sender.state {
     case .began:
@@ -374,6 +394,7 @@ public class DrawsanaView: UIView {
     case .ended, .failed, .cancelled:
       shapeTool.handlePinchEnd(context: toolOperationContext, startPoint: startPoint, endPoint: endPoint)
       reapplyLayerContents()
+      lastTrackedPoints = nil
     default:
       break
     }
