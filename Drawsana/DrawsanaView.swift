@@ -143,7 +143,7 @@ public class DrawsanaView: UIView {
   
   /// This tuple is to store the last tracked Points of a drawing created from the pinch gesture.
   /// Because most of the time, when the user lifts their fingers after performing a pinch gesture,
-  /// the gesure handler recognize only 1 touch was performed. So the ending state handlers
+  /// the gesture handler recognize only 1 touch was performed. So the ending state handlers
   /// (in this case the `.ended`, `.failed`, or `.cancelled`) was never called and the
   /// drawing is not saved.
   private var lastTrackedPoints: (CGPoint, CGPoint)? = nil
@@ -349,8 +349,9 @@ public class DrawsanaView: UIView {
   }
   
   private func _didPinch(_ sender: UIPinchGestureRecognizer) {
-    guard let shapeTool = tool as? DrawingToolForShapeWithTwoPoints,
-          !(tool is PenTool)
+    guard let shapeTool = tool,
+          !(tool is PenTool),
+          !(tool is EraserTool)
     else { return }
     
     if sender.numberOfTouches < 2 {
@@ -385,11 +386,11 @@ public class DrawsanaView: UIView {
       } else {
         transientBuffer = nil
       }
-      shapeTool.handlePinchBegin(context: toolOperationContext, startPoint: startPoint, endPoint: endPoint)
+      shapeTool.handlePinchStart(context: toolOperationContext, startPoint: startPoint, endPoint: endPoint)
       delegate?.drawsanaView(self, didStartDragWith: shapeTool)
       updateUncommittedShapeBuffers()
     case .changed:
-      shapeTool.handlePinchChange(context: toolOperationContext, startPoint: startPoint, endPoint: endPoint)
+      shapeTool.handlePinchContinue(context: toolOperationContext, startPoint: startPoint, endPoint: endPoint)
       updateUncommittedShapeBuffers()
     case .ended, .failed, .cancelled:
       shapeTool.handlePinchEnd(context: toolOperationContext, startPoint: startPoint, endPoint: endPoint)

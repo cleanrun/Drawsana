@@ -60,6 +60,18 @@ public protocol DrawingTool: AnyObject {
   /// You probably want to clean up all in-progress updates and reset to a state
   /// as if the drag had never begun.
   func handleDragCancel(context: ToolOperationContext, point: CGPoint)
+  
+  /// User has started to pinch on the drawing
+  func handlePinchStart(context: ToolOperationContext, startPoint: CGPoint, endPoint: CGPoint)
+  
+  /// User has changed their pinch position on the drawing
+  func handlePinchContinue(context: ToolOperationContext, startPoint: CGPoint, endPoint: CGPoint)
+  
+  /// User has ended the pinch on the drawing
+  func handlePinchEnd(context: ToolOperationContext, startPoint: CGPoint, endPoint: CGPoint)
+  
+  /// The pinch gesture has canceled for some reason
+  func handlePinchCancel(context: ToolOperationContext, startPoint: CGPoint, endPoint: CGPoint)
 
   /// User settings have changed. Update any local state or the shape, if
   /// relevant. The default implementation does nothing.

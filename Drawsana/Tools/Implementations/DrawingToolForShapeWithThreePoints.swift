@@ -75,6 +75,32 @@ open class DrawingToolForShapeWithThreePoints: DrawingTool {
     handleDragEnd(context: context, point: point)
   }
   
+  public func handlePinchStart(context: ToolOperationContext, startPoint: CGPoint, endPoint: CGPoint) {
+    let midYFromBothPoints: CGFloat = startPoint.y + ((endPoint.y - startPoint.y) / 2)
+    shapeInProgress = makeShape()
+    shapeInProgress?.a = startPoint
+    shapeInProgress?.b = CGPoint(x: startPoint.x, y: midYFromBothPoints)
+    shapeInProgress?.c = endPoint
+    shapeInProgress?.apply(userSettings: context.userSettings)
+  }
+  
+  public func handlePinchContinue(context: ToolOperationContext, startPoint: CGPoint, endPoint: CGPoint) {
+    shapeInProgress?.a = startPoint
+    shapeInProgress?.c = endPoint
+  }
+  
+  public func handlePinchEnd(context: ToolOperationContext, startPoint: CGPoint, endPoint: CGPoint) {
+    guard var shape = shapeInProgress else { return }
+    shape.a = startPoint
+    shape.c = endPoint
+    context.operationStack.apply(operation: AddShapeOperation(shape: shape))
+    shapeInProgress = nil
+  }
+  
+  public func handlePinchCancel(context: ToolOperationContext, startPoint: CGPoint, endPoint: CGPoint) {
+    handlePinchEnd(context: context, startPoint: startPoint, endPoint: endPoint)
+  }
+  
   public func renderShapeInProgress(transientContext: CGContext) {
     shapeInProgress?.render(in: transientContext)
   }

@@ -76,6 +76,22 @@ public class PenTool: DrawingTool {
     // just end the shape normally.
     handleDragEnd(context: context, point: point)
   }
+  
+  public func handlePinchStart(context: ToolOperationContext, startPoint: CGPoint, endPoint: CGPoint) {
+    // FIXME: This tool doesn't support pinch gestures
+  }
+  
+  public func handlePinchContinue(context: ToolOperationContext, startPoint: CGPoint, endPoint: CGPoint) {
+    // FIXME: This tool doesn't support pinch gestures
+  }
+  
+  public func handlePinchEnd(context: ToolOperationContext, startPoint: CGPoint, endPoint: CGPoint) {
+    // FIXME: This tool doesn't support pinch gestures
+  }
+  
+  public func handlePinchCancel(context: ToolOperationContext, startPoint: CGPoint, endPoint: CGPoint) {
+    // FIXME: This tool doesn't support pinch gestures
+  }
 
   public func renderShapeInProgress(transientContext: CGContext) {
     shapeInProgressBuffer = DrawsanaUtilities.renderImage(size: drawingSize) {

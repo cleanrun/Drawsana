@@ -163,6 +163,22 @@ public class TextTool: NSObject, DrawingTool {
       self.dragHandler = nil
     }
   }
+  
+  public func handlePinchStart(context: ToolOperationContext, startPoint: CGPoint, endPoint: CGPoint) {
+    // FIXME: This tool doesn't support pinch gestures
+  }
+  
+  public func handlePinchContinue(context: ToolOperationContext, startPoint: CGPoint, endPoint: CGPoint) {
+    // FIXME: This tool doesn't support pinch gestures
+  }
+  
+  public func handlePinchEnd(context: ToolOperationContext, startPoint: CGPoint, endPoint: CGPoint) {
+    // FIXME: This tool doesn't support pinch gestures
+  }
+  
+  public func handlePinchCancel(context: ToolOperationContext, startPoint: CGPoint, endPoint: CGPoint) {
+    // FIXME: This tool doesn't support pinch gestures
+  }
 
   public func apply(context: ToolOperationContext, userSettings: UserSettings) {
     selectedShape?.apply(userSettings: userSettings)

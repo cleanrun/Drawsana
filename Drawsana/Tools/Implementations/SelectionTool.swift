@@ -134,6 +134,22 @@ public class SelectionTool: DrawingTool {
     context.toolSettings.selectedShape?.transform = originalTransform ?? .identity
     context.toolSettings.isPersistentBufferDirty = true
   }
+  
+  public func handlePinchStart(context: ToolOperationContext, startPoint: CGPoint, endPoint: CGPoint) {
+    // FIXME: This tool doesn't support pinch gestures
+  }
+  
+  public func handlePinchContinue(context: ToolOperationContext, startPoint: CGPoint, endPoint: CGPoint) {
+    // FIXME: This tool doesn't support pinch gestures
+  }
+  
+  public func handlePinchEnd(context: ToolOperationContext, startPoint: CGPoint, endPoint: CGPoint) {
+    // FIXME: This tool doesn't support pinch gestures
+  }
+  
+  public func handlePinchCancel(context: ToolOperationContext, startPoint: CGPoint, endPoint: CGPoint) {
+    // FIXME: This tool doesn't support pinch gestures
+  }
 
   /// Update selection on context.toolSettings, but make sure that when apply()
   /// is called as a part of that change, we don't immediately change the
