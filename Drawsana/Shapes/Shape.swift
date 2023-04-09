@@ -70,6 +70,77 @@ extension ShapeSelectable {
   public func hitTest(point: CGPoint) -> Bool {
     return boundingRect.applying(transform.affineTransform).contains(point)
   }
+  
+  /// These rectangle represents the dragging area to resize the shape.
+  /// The purpose of creating this functions is to detect which point the
+  /// user taps, then the resize action will act accordingly to that.
+  /// So for example, you have a bounding rectangle of a shape, the
+  /// points looks pretty much like this:
+  /*
+    [A]----[B]----[C]
+     |             |
+     |             |
+    [D]           [E]
+     |             |
+     |             |
+    [F]----[G]----[H]
+  */
+  
+  public func getARect() -> CGRect {
+    return CGRect(x: boundingRect.minX - 15,
+                  y: boundingRect.minY - 15,
+                  width: 30,
+                  height: 30)
+  }
+  
+  public func getBRect() -> CGRect {
+    return CGRect(x: boundingRect.midX - 15,
+                  y: boundingRect.minY - 15,
+                  width: 30,
+                  height: 30)
+  }
+  
+  public func getCRect() -> CGRect {
+    return CGRect(x: boundingRect.maxX - 15,
+                  y: boundingRect.minY - 15,
+                  width: 30,
+                  height: 30)
+  }
+  
+  public func getDRect() -> CGRect {
+    return CGRect(x: boundingRect.minX - 15,
+                  y: boundingRect.midY - 15,
+                  width: 30,
+                  height: 30)
+  }
+  
+  public func getERect() -> CGRect {
+    return CGRect(x: boundingRect.maxX - 15,
+                  y: boundingRect.midY - 15,
+                  width: 30,
+                  height: 30)
+  }
+  
+  public func getFRect() -> CGRect {
+    return CGRect(x: boundingRect.minX - 15,
+                  y: boundingRect.maxY - 15,
+                  width: 30,
+                  height: 30)
+  }
+  
+  public func getGRect() -> CGRect {
+    return CGRect(x: boundingRect.midX - 15,
+                  y: boundingRect.maxY - 15,
+                  width: 30,
+                  height: 30)
+  }
+  
+  public func getHRect() -> CGRect {
+    return CGRect(x: boundingRect.maxX - 15,
+                  y: boundingRect.maxY - 15,
+                  width: 30,
+                  height: 30)
+  }
 }
 
 /**

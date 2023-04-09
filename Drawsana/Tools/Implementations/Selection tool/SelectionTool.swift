@@ -16,6 +16,18 @@ public protocol SelectionToolDelegate: AnyObject {
 }
 
 public class SelectionTool: DrawingTool {
+  
+  private enum SelectionPointAction {
+    case aPoint
+    case bPoint
+    case cPoint
+    case dPoint
+    case ePoint
+    case fPoint
+    case gPoint
+    case hPoint
+  }
+  
   public let name = "Selection"
   
   public var isProgressive: Bool { return false }
@@ -41,6 +53,8 @@ public class SelectionTool: DrawingTool {
   private var isDraggingShape = false
 
   private var isUpdatingSelection = false
+  
+  private var selectionPointAction: SelectionPointAction?
 
   public init(delegate: SelectionToolDelegate? = nil) {
     self.delegate = delegate
@@ -69,14 +83,33 @@ public class SelectionTool: DrawingTool {
   }
 
   public func handleTap(context: ToolOperationContext, point: CGPoint) {
-    if let selectedShape = context.toolSettings.selectedShape, selectedShape.hitTest(point: point) == true {
-      if let delegate = delegate {
-        delegate.selectionToolDidTapOnAlreadySelectedShape(selectedShape)
-      } else {
-        // Default behavior: deselect the shape
-        context.toolSettings.selectedShape = nil
+    if let selectedShape = context.toolSettings.selectedShape {
+      if selectedShape.getARect().contains(point) {
+        print("a rect")
+      } else if selectedShape.getBRect().contains(point) {
+        print("b rect")
+      } else if selectedShape.getCRect().contains(point) {
+        print("c rect")
+      } else if selectedShape.getDRect().contains(point) {
+        print("d rect")
+      } else if selectedShape.getERect().contains(point) {
+        print("e rect")
+      } else if selectedShape.getFRect().contains(point) {
+        print("f rect")
+      } else if selectedShape.getGRect().contains(point) {
+        print("g rect")
+      } else if selectedShape.getHRect().contains(point) {
+        print("h rect")
       }
-      return
+      if selectedShape.hitTest(point: point) {
+        if let delegate = delegate {
+          delegate.selectionToolDidTapOnAlreadySelectedShape(selectedShape)
+        } else {
+          // Default behavior: deselect the shape
+          context.toolSettings.selectedShape = nil
+        }
+        return
+      }
     }
 
     updateSelection(context: context, context.drawing.shapes
@@ -166,5 +199,9 @@ public class SelectionTool: DrawingTool {
     isUpdatingSelection = true
     context.toolSettings.selectedShape = newSelectedShape
     isUpdatingSelection = false
+  }
+  
+  private func getIfDraggingResizePoint(from point: CGPoint, boundingRect: CGRect) -> SelectionPointAction? {
+    return .aPoint
   }
 }

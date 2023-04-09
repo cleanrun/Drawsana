@@ -27,6 +27,20 @@ public class SelectionIndicatorView: UIView {
   }
   
   private(set) var selectionLayer = CAShapeLayer()
+
+  /// These points represents the dragging points to resize the shape.
+  /// So for example, you have a bounding rectangle of a shape, the
+  /// points looks pretty much like this:
+  /*
+    [A]----[B]----[C]
+     |             |
+     |             |
+    [D]           [E]
+     |             |
+     |             |
+    [F]----[G]----[H]
+  */
+  
   private(set) var aPointLayer = CAShapeLayer()
   private(set) var bPointLayer = CAShapeLayer()
   private(set) var cPointLayer = CAShapeLayer()
