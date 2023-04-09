@@ -120,6 +120,14 @@ public class SelectionTool: DrawingTool {
       isDraggingShape = false
       return
     }
+    
+    /*
+    if selectedShape is ShapeWithTwoPoints {
+      let bPoint = CGPoint(x: (selectedShape as! ShapeWithTwoPoints).b.x + 100, y: (selectedShape as! ShapeWithTwoPoints).b.y)
+      (selectedShape as! ShapeWithTwoPoints).b = bPoint
+    }
+     */
+    
     let delta = CGPoint(x: point.x - startPoint.x, y: point.y - startPoint.y)
     context.operationStack.apply(operation: ChangeTransformOperation(
       shape: selectedShape,

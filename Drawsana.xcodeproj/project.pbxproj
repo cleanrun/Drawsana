@@ -49,6 +49,7 @@
 		37EB4F0721064A6000E10461 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 37EB4F0521064A6000E10461 /* LaunchScreen.storyboard */; };
 		37EB4F1A21064A8100E10461 /* Drawsana.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 37EB4ED9210649E100E10461 /* Drawsana.framework */; };
 		37EB4F1B21064A8100E10461 /* Drawsana.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 37EB4ED9210649E100E10461 /* Drawsana.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		AB33A95729E1D62300FBA05F /* SelectionIndicatorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB33A95629E1D62300FBA05F /* SelectionIndicatorView.swift */; };
 		D024467821DA1ED000E431C8 /* StarTool_PentagonTool_TriangleTool.swift in Sources */ = {isa = PBXBuildFile; fileRef = D024467721DA1ED000E431C8 /* StarTool_PentagonTool_TriangleTool.swift */; };
 		D0E97E8321D0D3BA007722D7 /* StarShape.swift in Sources */ = {isa = PBXBuildFile; fileRef = D0E97E8221D0D3BA007722D7 /* StarShape.swift */; };
 		D0E97E8521D0DD90007722D7 /* NgonShape.swift in Sources */ = {isa = PBXBuildFile; fileRef = D0E97E8421D0DD90007722D7 /* NgonShape.swift */; };
@@ -137,6 +138,7 @@
 		37EB4F0321064A6000E10461 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		37EB4F0621064A6000E10461 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		37EB4F0821064A6000E10461 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		AB33A95629E1D62300FBA05F /* SelectionIndicatorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SelectionIndicatorView.swift; sourceTree = "<group>"; };
 		D024467721DA1ED000E431C8 /* StarTool_PentagonTool_TriangleTool.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = StarTool_PentagonTool_TriangleTool.swift; sourceTree = "<group>"; };
 		D0E97E8221D0D3BA007722D7 /* StarShape.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StarShape.swift; sourceTree = "<group>"; };
 		D0E97E8421D0DD90007722D7 /* NgonShape.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NgonShape.swift; sourceTree = "<group>"; };
@@ -238,9 +240,9 @@
 				37885E29210A9C69003A918F /* ArrowTool_EllipseTool_LineTool_RectTool.swift */,
 				D024467721DA1ED000E431C8 /* StarTool_PentagonTool_TriangleTool.swift */,
 				37885E2B210A9C95003A918F /* PenTool_EraserTool.swift */,
-				37885E2D210A9CDA003A918F /* SelectionTool.swift */,
 				DF8C5A1F227C18B0008C58AE /* AngleTool.swift */,
 				37362D6D211B7305003E5ACA /* Text tool */,
+				AB33A95529E1D5FE00FBA05F /* Selection tool */,
 			);
 			path = Implementations;
 			sourceTree = "<group>";
@@ -288,7 +290,9 @@
 				37EB4EE6210649E100E10461 /* Drawsana Tests */,
 				37EB4EDA210649E100E10461 /* Products */,
 			);
+			indentWidth = 2;
 			sourceTree = "<group>";
+			tabWidth = 2;
 		};
 		37EB4EDA210649E100E10461 /* Products */ = {
 			isa = PBXGroup;
@@ -335,6 +339,15 @@
 				37EB4F0821064A6000E10461 /* Info.plist */,
 			);
 			path = "Drawsana Demo";
+			sourceTree = "<group>";
+		};
+		AB33A95529E1D5FE00FBA05F /* Selection tool */ = {
+			isa = PBXGroup;
+			children = (
+				37885E2D210A9CDA003A918F /* SelectionTool.swift */,
+				AB33A95629E1D62300FBA05F /* SelectionIndicatorView.swift */,
+			);
+			path = "Selection tool";
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -496,6 +509,7 @@
 				376229812113AD570034D0E3 /* ToolOperationContext.swift in Sources */,
 				3762298B2113D7910034D0E3 /* TextTool.swift in Sources */,
 				D0F3B43D21D34F4000701BB4 /* CGFloat+DrawsanaExtensions.swift in Sources */,
+				AB33A95729E1D62300FBA05F /* SelectionIndicatorView.swift in Sources */,
 				376229742113AAF50034D0E3 /* ShapeTransform.swift in Sources */,
 				37885E2A210A9C69003A918F /* ArrowTool_EllipseTool_LineTool_RectTool.swift in Sources */,
 				3706B15C211BA07F00D41622 /* KeyedDecodingContainer+DrawsanaExtensions.swift in Sources */,
@@ -801,7 +815,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = K34Z59STMC;
+				DEVELOPMENT_TEAM = 6J2XDDYT2W;
 				INFOPLIST_FILE = "$(SRCROOT)/Drawsana Demo/Info.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -823,7 +837,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = K34Z59STMC;
+				DEVELOPMENT_TEAM = 6J2XDDYT2W;
 				INFOPLIST_FILE = "$(SRCROOT)/Drawsana Demo/Info.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
 				LD_RUNPATH_SEARCH_PATHS = (

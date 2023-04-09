@@ -120,7 +120,7 @@ public class DrawsanaView: UIView {
   /// View which is moved around to match the frame of the selected shape.
   /// You may configure whatever properties you want to to make it look like
   /// you want it to look.
-  public let selectionIndicatorView = UIView()
+  public let selectionIndicatorView = SelectionIndicatorView()
   
   
   /// Offset for the selection Indicatior, because it is placed relative to the anchorPoint.
@@ -205,19 +205,6 @@ public class DrawsanaView: UIView {
     // correctly. It's not clear why, though, since we're explicitly positioning
     // and transforming the view outside of AutoLayout.
     selectionIndicatorView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
-    
-    let selectionLayer = CAShapeLayer()
-    selectionLayer.strokeColor = UIColor.black.cgColor
-    selectionLayer.lineWidth = 2
-    selectionLayer.lineDashPattern = [4, 4]
-    selectionLayer.fillColor = nil
-    selectionLayer.frame = selectionIndicatorView.bounds
-    selectionLayer.path = UIBezierPath(rect: selectionIndicatorView.bounds).cgPath
-    selectionIndicatorView.layer.addSublayer(selectionLayer)
-    selectionIndicatorView.layer.shadowColor = UIColor.white.cgColor
-    selectionIndicatorView.layer.shadowOffset = .zero
-    selectionIndicatorView.layer.shadowRadius = 1
-    selectionIndicatorView.layer.shadowOpacity = 1
     selectionIndicatorView.isHidden = true
     
     immediatePanGestureRecognizer = ImmediatePanGestureRecognizer(target: self, action: #selector(didPan(sender:)))

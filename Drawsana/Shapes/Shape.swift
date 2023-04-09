@@ -111,7 +111,7 @@ extension ShapeWithStrokeState {
  This case is used to share code between the line, ellipse, and rectangle shapes
  and tools.
  */
-public protocol ShapeWithTwoPoints {
+public protocol ShapeWithTwoPoints: AnyObject {
   var a: CGPoint { get set }
   var b: CGPoint { get set }
 
