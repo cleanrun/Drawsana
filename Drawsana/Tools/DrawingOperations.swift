@@ -72,6 +72,34 @@ public struct ChangeTransformOperation: DrawingOperation {
   }
 }
 
+public struct ResizeShapeWithTwoPointsOperation: DrawingOperation {
+  let shape: ShapeWithTwoPoints
+  let originalAPoint: CGPoint
+  let originalBPoint: CGPoint
+  let updatedAPoint: CGPoint
+  let updatedBPoint: CGPoint
+  
+  public init(shape: ShapeWithTwoPoints, originalAPoint: CGPoint, originalBPoint: CGPoint, updatedAPoint: CGPoint, updatedBPoint: CGPoint) {
+    self.shape = shape
+    self.originalAPoint = originalAPoint
+    self.originalBPoint = originalBPoint
+    self.updatedAPoint = updatedAPoint
+    self.updatedBPoint = updatedBPoint
+  }
+  
+  public func apply(drawing: Drawing) {
+    shape.a = updatedAPoint
+    shape.b = updatedBPoint
+    drawing.update(shape: shape as! Shape)
+  }
+  
+  public func revert(drawing: Drawing) {
+    shape.a = originalAPoint
+    shape.b = originalBPoint
+    drawing.update(shape: shape as! Shape)
+  }
+}
+
 /**
  Edit the text of a `TextShape`. Undoing sets the text back to the original
  value.

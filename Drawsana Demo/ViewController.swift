@@ -73,7 +73,7 @@ class ViewController: UIViewController {
 
   /// Instance of `SelectionTool` for which we are the delegate, so we can
   /// respond to relevant UI events
-  lazy var selectionTool = { return SelectionTool(delegate: self) }()
+  lazy var selectionTool = { return SelectionTool(delegate: self, usingSelectionToolIndicatorViewFrom: drawingView) }()
 
   lazy var tools: [DrawingTool] = { return [
     PenTool(),

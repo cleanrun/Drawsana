@@ -86,60 +86,60 @@ extension ShapeSelectable {
     [F]----[G]----[H]
   */
   
-  public func getARect() -> CGRect {
-    return CGRect(x: boundingRect.minX - 15,
-                  y: boundingRect.minY - 15,
-                  width: 30,
-                  height: 30)
+  public func getARect(from selectionRect: CGRect) -> CGRect {
+    return CGRect(x: selectionRect.minX - 20,
+                  y: selectionRect.minY - 20,
+                  width: 40,
+                  height: 40)
   }
   
-  public func getBRect() -> CGRect {
-    return CGRect(x: boundingRect.midX - 15,
-                  y: boundingRect.minY - 15,
-                  width: 30,
-                  height: 30)
+  public func getBRect(from selectionRect: CGRect) -> CGRect {
+    return CGRect(x: selectionRect.midX - 20,
+                  y: selectionRect.minY - 20,
+                  width: 40,
+                  height: 40)
   }
   
-  public func getCRect() -> CGRect {
-    return CGRect(x: boundingRect.maxX - 15,
-                  y: boundingRect.minY - 15,
-                  width: 30,
-                  height: 30)
+  public func getCRect(from selectionRect: CGRect) -> CGRect {
+    return CGRect(x: selectionRect.maxX - 20,
+                  y: selectionRect.minY - 20,
+                  width: 40,
+                  height: 40)
   }
   
-  public func getDRect() -> CGRect {
-    return CGRect(x: boundingRect.minX - 15,
-                  y: boundingRect.midY - 15,
-                  width: 30,
-                  height: 30)
+  public func getDRect(from selectionRect: CGRect) -> CGRect {
+    return CGRect(x: selectionRect.minX - 20,
+                  y: selectionRect.midY - 20,
+                  width: 40,
+                  height: 40)
   }
   
-  public func getERect() -> CGRect {
-    return CGRect(x: boundingRect.maxX - 15,
-                  y: boundingRect.midY - 15,
-                  width: 30,
-                  height: 30)
+  public func getERect(from selectionRect: CGRect) -> CGRect {
+    return CGRect(x: selectionRect.maxX - 20,
+                  y: selectionRect.midY - 20,
+                  width: 40,
+                  height: 40)
   }
   
-  public func getFRect() -> CGRect {
-    return CGRect(x: boundingRect.minX - 15,
-                  y: boundingRect.maxY - 15,
-                  width: 30,
-                  height: 30)
+  public func getFRect(from selectionRect: CGRect) -> CGRect {
+    return CGRect(x: selectionRect.minX - 20,
+                  y: selectionRect.maxY - 20,
+                  width: 40,
+                  height: 40)
   }
   
-  public func getGRect() -> CGRect {
-    return CGRect(x: boundingRect.midX - 15,
-                  y: boundingRect.maxY - 15,
-                  width: 30,
-                  height: 30)
+  public func getGRect(from selectionRect: CGRect) -> CGRect {
+    return CGRect(x: selectionRect.midX - 20,
+                  y: selectionRect.maxY - 20,
+                  width: 40,
+                  height: 40)
   }
   
-  public func getHRect() -> CGRect {
-    return CGRect(x: boundingRect.maxX - 15,
-                  y: boundingRect.maxY - 15,
-                  width: 30,
-                  height: 30)
+  public func getHRect(from selectionRect: CGRect) -> CGRect {
+    return CGRect(x: selectionRect.maxX - 20,
+                  y: selectionRect.maxY - 20,
+                  width: 40,
+                  height: 40)
   }
 }
 
