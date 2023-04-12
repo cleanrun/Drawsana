@@ -21,11 +21,6 @@ public class SelectionTool: DrawingTool {
     case aPoint
     case bPoint
     case cPoint
-    case dPoint
-    case ePoint
-    case fPoint
-    case gPoint
-    case hPoint
     case movingAction
   }
   
@@ -44,6 +39,7 @@ public class SelectionTool: DrawingTool {
   private var updatedBPoint: CGPoint?
   
   private var originalTransform: ShapeTransform?
+  private var updatedTransform: ShapeTransform?
   private var startPoint: CGPoint?
   /* When you tap away from a shape you've just dragged, the method calls look
      like this:
@@ -99,6 +95,7 @@ public class SelectionTool: DrawingTool {
         // Default behavior: deselect the shape
         context.toolSettings.selectedShape = nil
       }
+      removeResizePoints()
       return
     }
 
@@ -106,59 +103,52 @@ public class SelectionTool: DrawingTool {
       .compactMap({ $0 as? ShapeSelectable })
       .filter({ $0.hitTest(point: point) })
       .last)
-  }
-
-  public func handleDragStart(context: ToolOperationContext, point: CGPoint) {
-    if let selectedShape = context.toolSettings.selectedShape {
-      selectionPointAction = getIfDraggingResizePoint(from: point, shape: selectedShape, in: selectionToolIndicatorView.frame)
-
-      if selectionPointAction == .movingAction {
-        if selectedShape.hitTest(point: point) {
-          isDraggingShape = true
-          originalTransform = selectedShape.transform
-          startPoint = point
-        } else {
-          selectionPointAction = nil
-          isDraggingShape = false
-          return
-        }
-      } else {
-        originalTransform = selectedShape.transform
-        isDraggingShape = false
+    
+    if let shape = context.drawing.shapes
+      .compactMap({ $0 as? ShapeSelectable })
+      .filter({ $0.hitTest(point: point) })
+      .last {
+      setResizePoints(shape: shape)
+      
+      if shape is ShapeWithTwoPoints {
+        let castedShape = shape as! ShapeWithTwoPoints
+        print("shape is two points, a: \(castedShape.a), b: \(castedShape.b)")
       }
+    } else {
+      removeResizePoints()
     }
   }
 
-  public func handleDragContinue(context: ToolOperationContext, point: CGPoint, velocity: CGPoint) {
-    guard var selectedShape = context.toolSettings.selectedShape else {
+  public func handleDragStart(context: ToolOperationContext, point: CGPoint) {
+    guard let selectedShape = context.toolSettings.selectedShape, selectedShape.hitTest(point: point) else {
       isDraggingShape = false
       return
     }
     
-    if isDraggingShape {
-      guard
-        let originalTransform = originalTransform,
-        let startPoint = startPoint else
-      {
-        isDraggingShape = false
-        return
-      }
-      let delta = CGPoint(x: point.x - startPoint.x, y: point.y - startPoint.y)
-      selectedShape.transform = originalTransform.translated(by: delta)
-      context.toolSettings.isPersistentBufferDirty = true
-    } else {
-      if selectedShape is ShapeWithTwoPoints {
-        var castedShape = selectedShape as! ShapeWithTwoPoints
-        calculateResizeChangesForShapesWithTwoPoints(point: point, shape: &castedShape)
-        
-        print("point: \(point), selected shape a: \(castedShape.a), b: \(castedShape.b)")
-      }
-      context.toolSettings.isPersistentBufferDirty = true
-    }
+    isDraggingShape = true
+    originalTransform = selectedShape.transform
+    startPoint = point
   }
-
+  
+  public func handleDragContinue(context: ToolOperationContext, point: CGPoint, velocity: CGPoint) {
+    guard
+      isDraggingShape,
+      let originalTransform = originalTransform,
+      let selectedShape = context.toolSettings.selectedShape,
+      let startPoint = startPoint else
+    {
+      isDraggingShape = false
+      return
+    }
+    let delta = CGPoint(x: point.x - startPoint.x, y: point.y - startPoint.y)
+    selectedShape.transform = originalTransform.translated(by: delta)
+    updatedTransform = originalTransform.translated(by: delta)
+    context.toolSettings.isPersistentBufferDirty = true
+  }
+  
   public func handleDragEnd(context: ToolOperationContext, point: CGPoint) {
     guard
+      isDraggingShape,
       let originalTransform = originalTransform,
       let selectedShape = context.toolSettings.selectedShape,
       let startPoint = startPoint else
@@ -167,31 +157,28 @@ public class SelectionTool: DrawingTool {
       return
     }
     
-    if isDraggingShape {
-      let delta = CGPoint(x: point.x - startPoint.x, y: point.y - startPoint.y)
-      context.operationStack.apply(operation: ChangeTransformOperation(
-        shape: selectedShape,
-        transform: originalTransform.translated(by: delta),
-        originalTransform: originalTransform))
-      context.toolSettings.isPersistentBufferDirty = true
-      isDraggingShape = false
-    } else {
-      guard let originalAPoint,
-            let originalBPoint,
-            let updatedAPoint,
-            let updatedBPoint else {
-        return
-      }
-      
+    let delta = CGPoint(x: point.x - startPoint.x, y: point.y - startPoint.y)
+    context.operationStack.apply(operation: ChangeTransformOperation(
+      shape: selectedShape,
+      transform: originalTransform,
+      originalTransform: originalTransform))
+    
+    if selectedShape is ShapeWithTwoPoints {
+      var castedShape = selectedShape as! ShapeWithTwoPoints
       context.operationStack.apply(operation: ResizeShapeWithTwoPointsOperation(
-        shape: selectedShape as! ShapeWithTwoPoints,
-        originalAPoint: originalAPoint,
-        originalBPoint: originalBPoint,
-        updatedAPoint: updatedAPoint,
-        updatedBPoint: updatedBPoint))
-      context.toolSettings.isPersistentBufferDirty = true
-      selectionPointAction = nil
+        shape: castedShape,
+        originalAPoint: castedShape.a,
+        originalBPoint: castedShape.b,
+        updatedAPoint: castedShape.a.applying(originalTransform.translated(by: delta).affineTransform),
+        updatedBPoint: castedShape.b.applying(originalTransform.translated(by: delta).affineTransform)))
+
+//      castedShape.a = castedShape.a.applying(originalTransform.translated(by: delta).affineTransform)
+//      castedShape.b = castedShape.b.applying(originalTransform.translated(by: delta).affineTransform)
     }
+    
+    context.toolSettings.isPersistentBufferDirty = true
+    updatedTransform = originalTransform.translated(by: delta)
+    isDraggingShape = false
   }
 
   public func handleDragCancel(context: ToolOperationContext, point: CGPoint) {
@@ -225,70 +212,21 @@ public class SelectionTool: DrawingTool {
     isUpdatingSelection = false
   }
   
-  private func getIfDraggingResizePoint(from point: CGPoint, shape: ShapeSelectable, in selectionRect: CGRect) -> SelectionPointAction? {
-    if shape.getARect(from: selectionRect).contains(point) {
-      return .aPoint
-    } else if shape.getBRect(from: selectionRect).contains(point) {
-      return .bPoint
-    } else if shape.getCRect(from: selectionRect).contains(point) {
-      return .cPoint
-    } else if shape.getDRect(from: selectionRect).contains(point) {
-      return .dPoint
-    } else if shape.getERect(from: selectionRect).contains(point) {
-      return .ePoint
-    } else if shape.getFRect(from: selectionRect).contains(point) {
-      return .fPoint
-    } else if shape.getGRect(from: selectionRect).contains(point) {
-      return .gPoint
-    } else if shape.getHRect(from: selectionRect).contains(point) {
-      return .hPoint
+  private func setResizePoints(shape: ShapeSelectable) {
+    if shape is ShapeWithTwoPoints {
+      let castedShape = shape as! ShapeWithTwoPoints
+      selectionToolIndicatorView.configurePointsForShapeWithTwoPoints(aPoint: castedShape.a, bPoint: castedShape.b)
+    } else if shape is ShapeWithThreePoints {
+      let castedShape = shape as! ShapeWithThreePoints
+      selectionToolIndicatorView.configurePointsForShapeWithThreePoints(aPoint: castedShape.a, bPoint: castedShape.b, cPoint: castedShape.c)
     }
-    
-    return .movingAction
   }
   
-  private func calculateResizeChangesForShapesWithTwoPoints(point: CGPoint, shape: inout ShapeWithTwoPoints) {
-    updatedAPoint = shape.a
-    updatedBPoint = shape.b
-    
-    switch selectionPointAction {
-    case .bPoint:
-      if shape.a.y < shape.b.y {
-        updatedAPoint = CGPoint(x: shape.a.x, y: point.y)
-        updatedBPoint = shape.b
-      } else {
-        updatedAPoint = shape.a
-        updatedBPoint = CGPoint(x: shape.b.x, y: point.y)
-      }
-    case .dPoint:
-      if shape.a.x < shape.b.x {
-        updatedAPoint = CGPoint(x: point.x, y: shape.a.y)
-        updatedBPoint = shape.b
-      } else {
-        updatedAPoint = shape.a
-        updatedBPoint = CGPoint(x: point.x, y: shape.b.y)
-      }
-    case .ePoint:
-      if shape.a.x > shape.b.x {
-        updatedAPoint = CGPoint(x: point.x, y: shape.a.y)
-        updatedBPoint = shape.b
-      } else {
-        updatedAPoint = shape.a
-        updatedBPoint = CGPoint(x: point.x, y: shape.b.y)
-      }
-    case .gPoint:
-      if shape.a.y > shape.b.y {
-        updatedAPoint = CGPoint(x: shape.a.x, y: point.y)
-        updatedBPoint = shape.b
-      } else {
-        updatedAPoint = shape.a
-        updatedBPoint = CGPoint(x: shape.b.x, y: point.y)
-      }
-    default:
-      return
-    }
-    
-    shape.a = updatedAPoint!
-    shape.b = updatedBPoint!
+  private func removeResizePoints() {
+    selectionToolIndicatorView.removeAllPointsFromLayer()
+  }
+  
+  private func getIfDraggingResizePoint(from point: CGPoint, shape: ShapeSelectable, in selectionRect: CGRect) -> SelectionPointAction? {
+    return .movingAction
   }
 }

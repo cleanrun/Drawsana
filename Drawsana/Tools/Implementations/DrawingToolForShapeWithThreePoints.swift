@@ -77,9 +77,10 @@ open class DrawingToolForShapeWithThreePoints: DrawingTool {
   
   public func handlePinchStart(context: ToolOperationContext, startPoint: CGPoint, endPoint: CGPoint) {
     let midYFromBothPoints: CGFloat = startPoint.y + ((endPoint.y - startPoint.y) / 2)
+    let midXFromBothPoints: CGFloat = startPoint.x + ((endPoint.x - startPoint.x) / 2)
     shapeInProgress = makeShape()
     shapeInProgress?.a = startPoint
-    shapeInProgress?.b = CGPoint(x: startPoint.x, y: midYFromBothPoints)
+    shapeInProgress?.b = CGPoint(x: midXFromBothPoints, y: midYFromBothPoints)
     shapeInProgress?.c = endPoint
     shapeInProgress?.apply(userSettings: context.userSettings)
   }
@@ -108,5 +109,25 @@ open class DrawingToolForShapeWithThreePoints: DrawingTool {
   public func apply(context: ToolOperationContext, userSettings: UserSettings) {
     shapeInProgress?.apply(userSettings: userSettings)
     context.toolSettings.isPersistentBufferDirty = true
+  }
+  
+  private func generateDistanceFromTwoPoints(from: CGPoint, to: CGPoint) -> CGFloat {
+    let squared: CGFloat = (from.x - to.x) * (from.x - to.x) + (from.y - to.y) * (from.y - to.y)
+    return sqrt(squared)
+  }
+  
+  private func generateBPoint(x: CGFloat, y: CGFloat, angle: CGFloat) -> CGPoint {
+    let distance: CGFloat = 100
+    let xValue: CGFloat = x + distance * __sinpi(angle/180)
+    let yValue: CGFloat = y + distance * __cospi(angle/180)
+    
+    return CGPoint(x: xValue, y: yValue)
+  }
+  
+  private func getAngle(from: CGPoint, to: CGPoint) -> Double {
+    let deltaY = from.y - to.y
+    let deltaX = from.x - to.x
+    let angle = atan2(deltaY, deltaX) * 180 / .pi
+    return angle
   }
 }

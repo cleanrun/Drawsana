@@ -209,6 +209,20 @@ extension ShapeWithTwoPoints {
   public var boundingRect: CGRect {
     return rect.insetBy(dx: -strokeWidth/2, dy: -strokeWidth/2)
   }
+  
+  public func getAPointArea(selectionRect: CGRect) -> CGRect {
+    return CGRect(x: a.x - rect.minX - 20,
+                  y: a.y - rect.minY - 20,
+                  width: 40,
+                  height: 40)
+  }
+  
+  public func getBPointArea(selectionRect: CGRect) -> CGRect {
+    return CGRect(x: b.x - rect.minX - 20,
+                  y: b.y - rect.minY - 20,
+                  width: 40,
+                  height: 40)
+  }
 }
 
 /**

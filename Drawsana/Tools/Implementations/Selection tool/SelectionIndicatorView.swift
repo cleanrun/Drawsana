@@ -8,47 +8,23 @@
 
 import UIKit
 
+public enum PointRectangle {
+  case aPoint
+  case bPoint
+  case cPoint
+  case noPoint
+}
+
 public class SelectionIndicatorView: UIView {
-  
-  private enum PointRectangle {
-    case aPoint
-    case bPoint
-    case cPoint
-    case dPoint
-    case ePoint
-    case fPoint
-    case gPoint
-    case hPoint
-  }
-  
   private let pointWidthAndHeight: CGFloat = 10
   private var pointCornerRadius: CGFloat {
     pointWidthAndHeight / 2
   }
   
   private(set) var selectionLayer = CAShapeLayer()
-
-  /// These points represents the dragging points to resize the shape.
-  /// So for example, you have a bounding rectangle of a shape, the
-  /// points looks pretty much like this:
-  /*
-    [A]----[B]----[C]
-     |             |
-     |             |
-    [D]           [E]
-     |             |
-     |             |
-    [F]----[G]----[H]
-  */
-  
-  private(set) var aPointLayer = CAShapeLayer()
-  private(set) var bPointLayer = CAShapeLayer()
-  private(set) var cPointLayer = CAShapeLayer()
-  private(set) var dPointLayer = CAShapeLayer()
-  private(set) var ePointLayer = CAShapeLayer()
-  private(set) var fPointLayer = CAShapeLayer()
-  private(set) var gPointLayer = CAShapeLayer()
-  private(set) var hPointLayer = CAShapeLayer()
+  private var aPointLayer = CAShapeLayer()
+  private var bPointLayer = CAShapeLayer()
+  private var cPointLayer = CAShapeLayer()
   
   init() {
     super.init(frame: .zero)
@@ -62,11 +38,6 @@ public class SelectionIndicatorView: UIView {
   
   required init?(coder: NSCoder) {
     fatalError("Not supported for this view")
-  }
-  
-  public override func layoutSubviews() {
-    super.layoutSubviews()
-    setPointLayers()
   }
   
   private func setSelectionLayer() {
@@ -85,54 +56,46 @@ public class SelectionIndicatorView: UIView {
     layer.addSublayer(selectionLayer)
   }
   
-  private func setPointLayers() {
-    configurePoint(using: &aPointLayer, type: .aPoint)
-    configurePoint(using: &bPointLayer, type: .bPoint)
-    configurePoint(using: &cPointLayer, type: .cPoint)
-    configurePoint(using: &dPointLayer, type: .dPoint)
-    configurePoint(using: &ePointLayer, type: .ePoint)
-    configurePoint(using: &fPointLayer, type: .fPoint)
-    configurePoint(using: &gPointLayer, type: .gPoint)
-    configurePoint(using: &hPointLayer, type: .hPoint)
+  private func configurePoint(using pointLayer: inout CAShapeLayer, point: CGPoint) {
+    let rect = CGRect(
+      x: point.x - frame.minX - pointCornerRadius,
+      y: point.y - frame.minY - pointCornerRadius,
+      width: pointWidthAndHeight,
+      height: pointWidthAndHeight)
+    
+    print("frame inside: \(frame)")
+    
+    pointLayer.frame = bounds
+    pointLayer.path = UIBezierPath(roundedRect: rect, cornerRadius: pointCornerRadius).cgPath
+    pointLayer.fillColor = UIColor.black.cgColor
+  }
+  
+  public func configurePointsForShapeWithTwoPoints(aPoint: CGPoint, bPoint: CGPoint) {
+    configurePoint(using: &aPointLayer, point: aPoint)
+    configurePoint(using: &bPointLayer, point: bPoint)
+    
+    layer.addSublayer(aPointLayer)
+    layer.addSublayer(bPointLayer)
+  }
+  
+  public func configurePointsForShapeWithThreePoints(aPoint: CGPoint, bPoint: CGPoint, cPoint: CGPoint) {
+    configurePoint(using: &aPointLayer, point: aPoint)
+    configurePoint(using: &bPointLayer, point: bPoint)
+    configurePoint(using: &cPointLayer, point: cPoint)
     
     layer.addSublayer(aPointLayer)
     layer.addSublayer(bPointLayer)
     layer.addSublayer(cPointLayer)
-    layer.addSublayer(dPointLayer)
-    layer.addSublayer(ePointLayer)
-    layer.addSublayer(fPointLayer)
-    layer.addSublayer(gPointLayer)
-    layer.addSublayer(hPointLayer)
   }
   
-  private func createPointPath(using point: PointRectangle) -> CGPath {
-    var rect: CGRect!
-    
-    switch point {
-    case .aPoint:
-      rect = CGRect(x: bounds.minX - pointCornerRadius, y: bounds.minY - pointCornerRadius, width: pointWidthAndHeight, height: pointWidthAndHeight)
-    case .bPoint:
-      rect = CGRect(x: bounds.midX - pointCornerRadius, y: bounds.minY - pointCornerRadius, width: pointWidthAndHeight, height: pointWidthAndHeight)
-    case .cPoint:
-      rect = CGRect(x: bounds.maxX - pointCornerRadius, y: bounds.minY - pointCornerRadius, width: pointWidthAndHeight, height: pointWidthAndHeight)
-    case .dPoint:
-      rect = CGRect(x: bounds.minX - pointCornerRadius, y: bounds.midY - pointCornerRadius, width: pointWidthAndHeight, height: pointWidthAndHeight)
-    case .ePoint:
-      rect = CGRect(x: bounds.maxX - pointCornerRadius, y: bounds.midY - pointCornerRadius, width: pointWidthAndHeight, height: pointWidthAndHeight)
-    case .fPoint:
-      rect = CGRect(x: bounds.minX - pointCornerRadius, y: bounds.maxY - pointCornerRadius, width: pointWidthAndHeight, height: pointWidthAndHeight)
-    case .gPoint:
-      rect = CGRect(x: bounds.midX - pointCornerRadius, y: bounds.maxY - pointCornerRadius, width: pointWidthAndHeight, height: pointWidthAndHeight)
-    case .hPoint:
-      rect = CGRect(x: bounds.maxX - pointCornerRadius, y: bounds.maxY - pointCornerRadius, width: pointWidthAndHeight, height: pointWidthAndHeight)
+  public func removeAllPointsFromLayer() {
+    if let sublayers = layer.sublayers {
+      for sublayer in sublayers {
+        guard sublayer != selectionLayer else { return }
+        if sublayer is CAShapeLayer {
+          sublayer.removeFromSuperlayer()
+        }
+      }
     }
-    
-    return UIBezierPath(roundedRect: rect, cornerRadius: pointCornerRadius).cgPath
-  }
-  
-  private func configurePoint(using pointLayer: inout CAShapeLayer, type: PointRectangle) {
-    pointLayer.frame = bounds
-    pointLayer.path = createPointPath(using: type)
-    pointLayer.fillColor = UIColor.black.cgColor
   }
 }

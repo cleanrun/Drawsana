@@ -52,7 +52,8 @@ open class DrawingToolForShapeWithTwoPoints: DrawingTool {
   public func handleDragCancel(context: ToolOperationContext, point: CGPoint) {
     // No such thing as a cancel for this tool. If this was recognized as a tap,
     // just end the shape normally.
-    handleDragEnd(context: context, point: point)
+    //handleDragEnd(context: context, point: point)
+    shapeInProgress = nil
   }
   
   public func handlePinchStart(context: ToolOperationContext, startPoint: CGPoint, endPoint: CGPoint) {
