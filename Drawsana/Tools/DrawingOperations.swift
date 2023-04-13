@@ -100,6 +100,40 @@ public struct ResizeShapeWithTwoPointsOperation: DrawingOperation {
   }
 }
 
+public struct ResizeShapeWithThreePointsOperation: DrawingOperation {
+  let shape: ShapeWithThreePoints
+  let originalAPoint: CGPoint
+  let originalBPoint: CGPoint
+  let originalCPoint: CGPoint
+  let updatedAPoint: CGPoint
+  let updatedBPoint: CGPoint
+  let updatedCPoint: CGPoint
+  
+  public init(shape: ShapeWithThreePoints, originalAPoint: CGPoint, originalBPoint: CGPoint, originalCPoint: CGPoint, updatedAPoint: CGPoint, updatedBPoint: CGPoint, updatedCPoint: CGPoint) {
+    self.shape = shape
+    self.originalAPoint = originalAPoint
+    self.originalBPoint = originalBPoint
+    self.originalCPoint = originalCPoint
+    self.updatedAPoint = updatedAPoint
+    self.updatedBPoint = updatedBPoint
+    self.updatedCPoint = updatedCPoint
+  }
+  
+  public func apply(drawing: Drawing) {
+    shape.a = updatedAPoint
+    shape.b = updatedBPoint
+    shape.c = updatedCPoint
+    drawing.update(shape: shape as! Shape)
+  }
+  
+  public func revert(drawing: Drawing) {
+    shape.a = originalAPoint
+    shape.b = originalBPoint
+    shape.c = originalCPoint
+    drawing.update(shape: shape as! Shape)
+  }
+}
+
 /**
  Edit the text of a `TextShape`. Undoing sets the text back to the original
  value.

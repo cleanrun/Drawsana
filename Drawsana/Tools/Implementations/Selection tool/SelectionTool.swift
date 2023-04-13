@@ -5,7 +5,6 @@
 //  Created by Steve Landey on 7/26/18.
 //  Copyright © 2018 Asana. All rights reserved.
 //
-
 import UIKit
 
 public protocol SelectionToolDelegate: AnyObject {
@@ -35,8 +34,10 @@ public class SelectionTool: DrawingTool {
 
   private var originalAPoint: CGPoint?
   private var originalBPoint: CGPoint?
+  private var originalCPoint: CGPoint?
   private var updatedAPoint: CGPoint?
   private var updatedBPoint: CGPoint?
+  private var updatedCPoint: CGPoint?
   
   private var originalTransform: ShapeTransform?
   private var updatedTransform: ShapeTransform?
@@ -59,10 +60,13 @@ public class SelectionTool: DrawingTool {
   private var selectionPointAction: SelectionPointAction?
   
   private var selectionToolIndicatorView: SelectionIndicatorView!
+  
+  private var drawsanaView: DrawsanaView!
 
   public init(delegate: SelectionToolDelegate? = nil, usingSelectionToolIndicatorViewFrom drawsanaView: DrawsanaView) {
     self.delegate = delegate
     self.selectionToolIndicatorView = drawsanaView.selectionIndicatorView
+    self.drawsanaView = drawsanaView
   }
   
   public func deactivate(context: ToolOperationContext) {
@@ -88,15 +92,17 @@ public class SelectionTool: DrawingTool {
   }
 
   public func handleTap(context: ToolOperationContext, point: CGPoint) {
-    if let selectedShape = context.toolSettings.selectedShape, selectedShape.hitTest(point: point) {
-      if let delegate = delegate {
-        delegate.selectionToolDidTapOnAlreadySelectedShape(selectedShape)
-      } else {
-        // Default behavior: deselect the shape
-        context.toolSettings.selectedShape = nil
+    if let selectedShape = context.toolSettings.selectedShape {
+      if selectedShape.hitTest(point: point) {
+        if let delegate = delegate {
+          delegate.selectionToolDidTapOnAlreadySelectedShape(selectedShape)
+        } else {
+          // Default behavior: deselect the shape
+          context.toolSettings.selectedShape = nil
+        }
+        removeResizePoints()
+        return
       }
-      removeResizePoints()
-      return
     }
 
     updateSelection(context: context, context.drawing.shapes
@@ -120,19 +126,72 @@ public class SelectionTool: DrawingTool {
   }
 
   public func handleDragStart(context: ToolOperationContext, point: CGPoint) {
-    guard let selectedShape = context.toolSettings.selectedShape, selectedShape.hitTest(point: point) else {
+    guard let selectedShape = context.toolSettings.selectedShape else {
       isDraggingShape = false
       return
     }
     
-    isDraggingShape = true
-    originalTransform = selectedShape.transform
-    startPoint = point
+    if let selectedShape = context.toolSettings.selectedShape {
+      selectionPointAction = getIfDraggingResizePoint(
+        from: drawsanaView.convert(
+          point,
+          to: selectionToolIndicatorView),
+        shape: selectedShape)
+      
+      print("action: \(selectionPointAction)")
+      
+      if selectionPointAction == .movingAction {
+//        if selectedShape.hitTest(point: point) {
+//          isDraggingShape = true
+//          originalTransform = selectedShape.transform
+//          startPoint = point
+//        } else {
+//          selectionPointAction = nil
+//          isDraggingShape = false
+//          return
+//        }
+        
+        isDraggingShape = true
+        originalTransform = selectedShape.transform
+        startPoint = point
+      } else {
+        originalTransform = selectedShape.transform
+        isDraggingShape = false
+      }
+      
+//      if selectedShape is ShapeWithTwoPoints {
+//        let castedShape = selectedShape as! ShapeWithTwoPoints
+//
+//        let aPointArea =  castedShape.getAPointArea(selectionRect: selectionToolIndicatorView.frame)
+//
+//        print("a: \(castedShape.a), area: \(aPointArea)")
+//
+//        let aLayer = CAShapeLayer()
+//        aLayer.frame = selectionToolIndicatorView.bounds
+//        aLayer.path = UIBezierPath(roundedRect: aPointArea, cornerRadius: 30).cgPath
+//        aLayer.fillColor = UIColor.blue.withAlphaComponent(0.5).cgColor
+//        selectionToolIndicatorView.layer.addSublayer(aLayer)
+//
+//        let bPointArea =  castedShape.getBPointArea(selectionRect: selectionToolIndicatorView.frame)
+//
+//        print("b: \(castedShape.b), area: \(bPointArea)")
+//
+//        let bLayer = CAShapeLayer()
+//        bLayer.frame = selectionToolIndicatorView.bounds
+//        bLayer.path = UIBezierPath(roundedRect: bPointArea, cornerRadius: 30).cgPath
+//        bLayer.fillColor = UIColor.blue.withAlphaComponent(0.5).cgColor
+//        selectionToolIndicatorView.layer.addSublayer(bLayer)
+//      }
+      
+//      isDraggingShape = true
+//      originalTransform = selectedShape.transform
+//      startPoint = point
+    }
   }
   
   public func handleDragContinue(context: ToolOperationContext, point: CGPoint, velocity: CGPoint) {
     guard
-      isDraggingShape,
+      
       let originalTransform = originalTransform,
       let selectedShape = context.toolSettings.selectedShape,
       let startPoint = startPoint else
@@ -140,10 +199,16 @@ public class SelectionTool: DrawingTool {
       isDraggingShape = false
       return
     }
-    let delta = CGPoint(x: point.x - startPoint.x, y: point.y - startPoint.y)
-    selectedShape.transform = originalTransform.translated(by: delta)
-    updatedTransform = originalTransform.translated(by: delta)
-    context.toolSettings.isPersistentBufferDirty = true
+    
+    if selectionPointAction == .movingAction {
+      let delta = CGPoint(x: point.x - startPoint.x, y: point.y - startPoint.y)
+      selectedShape.transform = originalTransform.translated(by: delta)
+      updatedTransform = originalTransform.translated(by: delta)
+      context.toolSettings.isPersistentBufferDirty = true
+    } else {
+      calculatePointChangeForPanGesture(point: point, shape: selectedShape)
+      context.toolSettings.isPersistentBufferDirty = true
+    }
   }
   
   public func handleDragEnd(context: ToolOperationContext, point: CGPoint) {
@@ -158,27 +223,72 @@ public class SelectionTool: DrawingTool {
     }
     
     let delta = CGPoint(x: point.x - startPoint.x, y: point.y - startPoint.y)
-    context.operationStack.apply(operation: ChangeTransformOperation(
-      shape: selectedShape,
-      transform: originalTransform,
-      originalTransform: originalTransform))
     
-    if selectedShape is ShapeWithTwoPoints {
-      var castedShape = selectedShape as! ShapeWithTwoPoints
-      context.operationStack.apply(operation: ResizeShapeWithTwoPointsOperation(
-        shape: castedShape,
-        originalAPoint: castedShape.a,
-        originalBPoint: castedShape.b,
-        updatedAPoint: castedShape.a.applying(originalTransform.translated(by: delta).affineTransform),
-        updatedBPoint: castedShape.b.applying(originalTransform.translated(by: delta).affineTransform)))
-
-//      castedShape.a = castedShape.a.applying(originalTransform.translated(by: delta).affineTransform)
-//      castedShape.b = castedShape.b.applying(originalTransform.translated(by: delta).affineTransform)
+    if selectionPointAction == .movingAction {
+      context.operationStack.apply(operation: ChangeTransformOperation(
+        shape: selectedShape,
+        transform: originalTransform,
+        originalTransform: originalTransform))
+      
+      if selectedShape is ShapeWithTwoPoints {
+        let castedShape = selectedShape as! ShapeWithTwoPoints
+        context.operationStack.apply(operation: ResizeShapeWithTwoPointsOperation(
+          shape: castedShape,
+          originalAPoint: castedShape.a,
+          originalBPoint: castedShape.b,
+          updatedAPoint: castedShape.a.applying(originalTransform.translated(by: delta).affineTransform),
+          updatedBPoint: castedShape.b.applying(originalTransform.translated(by: delta).affineTransform)
+        ))
+      } else if selectedShape is ShapeWithThreePoints {
+        let castedShape = selectedShape as! ShapeWithThreePoints
+        context.operationStack.apply(operation: ResizeShapeWithThreePointsOperation(
+          shape: castedShape,
+          originalAPoint: castedShape.a,
+          originalBPoint: castedShape.b,
+          originalCPoint: castedShape.c,
+          updatedAPoint: castedShape.a.applying(originalTransform.translated(by: delta).affineTransform),
+          updatedBPoint: castedShape.b.applying(originalTransform.translated(by: delta).affineTransform),
+          updatedCPoint: castedShape.c.applying(originalTransform.translated(by: delta).affineTransform)
+        ))
+      }
+      
+      context.toolSettings.isPersistentBufferDirty = true
+      updatedTransform = originalTransform.translated(by: delta)
+      isDraggingShape = false
+    } else {
+      context.operationStack.apply(operation: ChangeTransformOperation(
+        shape: selectedShape,
+        transform: originalTransform,
+        originalTransform: originalTransform))
+      
+      if selectedShape is ShapeWithTwoPoints {
+        let castedShape = selectedShape as! ShapeWithTwoPoints
+        context.operationStack.apply(operation: ResizeShapeWithTwoPointsOperation(
+          shape: castedShape,
+          originalAPoint: originalAPoint!,
+          originalBPoint: originalBPoint!,
+          updatedAPoint: castedShape.a,
+          updatedBPoint: castedShape.b))
+      } else if selectedShape is ShapeWithThreePoints {
+        let castedShape = selectedShape as! ShapeWithThreePoints
+        context.operationStack.apply(operation: ResizeShapeWithThreePointsOperation(
+          shape: castedShape,
+          originalAPoint: originalAPoint!,
+          originalBPoint: originalBPoint!,
+          originalCPoint: originalCPoint!,
+          updatedAPoint: castedShape.a,
+          updatedBPoint: castedShape.b,
+          updatedCPoint: castedShape.c
+        ))
+      }
+      
+      context.toolSettings.isPersistentBufferDirty = true
+      updatedTransform = originalTransform.translated(by: delta)
+      isDraggingShape = false
     }
     
-    context.toolSettings.isPersistentBufferDirty = true
-    updatedTransform = originalTransform.translated(by: delta)
-    isDraggingShape = false
+    removeOriginalPoints()
+    selectionPointAction = nil
   }
 
   public func handleDragCancel(context: ToolOperationContext, point: CGPoint) {
@@ -226,7 +336,68 @@ public class SelectionTool: DrawingTool {
     selectionToolIndicatorView.removeAllPointsFromLayer()
   }
   
-  private func getIfDraggingResizePoint(from point: CGPoint, shape: ShapeSelectable, in selectionRect: CGRect) -> SelectionPointAction? {
+  private func getIfDraggingResizePoint(from point: CGPoint, shape: ShapeSelectable) -> SelectionPointAction? {
+    if shape is ShapeWithTwoPoints {
+      let castedShape = shape as! ShapeWithTwoPoints
+      if castedShape.getAPointArea().contains(point) {
+        return .aPoint
+      } else if castedShape.getBPointArea().contains(point) {
+        return .bPoint
+      }
+    } else if shape is ShapeWithThreePoints {
+      let castedShape = shape as! ShapeWithThreePoints
+      if castedShape.getAPointArea().contains(point) {
+        return .aPoint
+      } else if castedShape.getBPointArea().contains(point) {
+        return .bPoint
+      }
+    }
+    
     return .movingAction
+  }
+  
+  private func setOriginalPoints(shape: ShapeSelectable) {
+    if shape is ShapeWithTwoPoints {
+      let castedShape = shape as! ShapeWithTwoPoints
+      originalAPoint = castedShape.a
+      originalBPoint = castedShape.b
+    } else if shape is ShapeWithThreePoints {
+      let castedShape = shape as! ShapeWithThreePoints
+      originalAPoint = castedShape.a
+      originalBPoint = castedShape.b
+      originalCPoint = castedShape.c
+    }
+  }
+  
+  private func removeOriginalPoints() {
+    originalAPoint = nil
+    originalBPoint = nil
+    originalCPoint = nil
+  }
+  
+  private func calculatePointChangeForPanGesture(point: CGPoint, shape: ShapeSelectable) {
+    if shape is ShapeWithTwoPoints {
+      var castedShape = shape as! ShapeWithTwoPoints
+      switch selectionPointAction {
+      case .aPoint:
+        castedShape.a = point
+      case .bPoint:
+        castedShape.b = point
+      default:
+        break
+      }
+    } else if shape is ShapeWithThreePoints {
+      var castedShape = shape as! ShapeWithThreePoints
+      switch selectionPointAction {
+      case .aPoint:
+        castedShape.a = point
+      case .bPoint:
+        castedShape.b = point
+      case .cPoint:
+        castedShape.c = point
+      default:
+        break
+      }
+    }
   }
 }

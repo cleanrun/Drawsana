@@ -210,14 +210,14 @@ extension ShapeWithTwoPoints {
     return rect.insetBy(dx: -strokeWidth/2, dy: -strokeWidth/2)
   }
   
-  public func getAPointArea(selectionRect: CGRect) -> CGRect {
+  public func getAPointArea() -> CGRect {
     return CGRect(x: a.x - rect.minX - 20,
                   y: a.y - rect.minY - 20,
                   width: 40,
                   height: 40)
   }
   
-  public func getBPointArea(selectionRect: CGRect) -> CGRect {
+  public func getBPointArea() -> CGRect {
     return CGRect(x: b.x - rect.minX - 20,
                   y: b.y - rect.minY - 20,
                   width: 40,
@@ -228,7 +228,7 @@ extension ShapeWithTwoPoints {
 /**
  Special case of `Shape` where the shape is defined by exactly three points.
  */
-public protocol ShapeWithThreePoints {
+public protocol ShapeWithThreePoints: AnyObject {
   var a: CGPoint { get set }
   var b: CGPoint { get set }
   var c: CGPoint { get set }
@@ -247,5 +247,26 @@ extension ShapeWithThreePoints {
   
   public var boundingRect: CGRect {
     return rect.insetBy(dx: -strokeWidth/2, dy: -strokeWidth/2)
+  }
+  
+  public func getAPointArea() -> CGRect {
+    return CGRect(x: a.x - rect.minX - 20,
+                  y: a.y - rect.minY - 20,
+                  width: 40,
+                  height: 40)
+  }
+  
+  public func getBPointArea() -> CGRect {
+    return CGRect(x: b.x - rect.minX - 20,
+                  y: b.y - rect.minY - 20,
+                  width: 40,
+                  height: 40)
+  }
+  
+  public func getCPointArea() -> CGRect {
+    return CGRect(x: c.x - rect.minX - 20,
+                  y: c.y - rect.minY - 20,
+                  width: 40,
+                  height: 40)
   }
 }
