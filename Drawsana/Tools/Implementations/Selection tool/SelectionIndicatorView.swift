@@ -63,11 +63,20 @@ public class SelectionIndicatorView: UIView {
       width: pointWidthAndHeight,
       height: pointWidthAndHeight)
     
-    print("frame inside: \(frame)")
-    
     pointLayer.frame = bounds
     pointLayer.path = UIBezierPath(roundedRect: rect, cornerRadius: pointCornerRadius).cgPath
     pointLayer.fillColor = UIColor.black.cgColor
+  }
+  
+  private func updatePoint(using pointLayer: inout CAShapeLayer, point: CGPoint) {
+    let rect = CGRect(
+      x: point.x - frame.minX - pointCornerRadius,
+      y: point.y - frame.minY - pointCornerRadius,
+      width: pointWidthAndHeight,
+      height: pointWidthAndHeight)
+    
+    pointLayer.path = UIBezierPath(roundedRect: rect, cornerRadius: pointCornerRadius).cgPath
+    pointLayer.setNeedsDisplay()
   }
   
   public func configurePointsForShapeWithTwoPoints(aPoint: CGPoint, bPoint: CGPoint) {
@@ -86,6 +95,17 @@ public class SelectionIndicatorView: UIView {
     layer.addSublayer(aPointLayer)
     layer.addSublayer(bPointLayer)
     layer.addSublayer(cPointLayer)
+  }
+  
+  public func updatePointsForShapeWithTwoPoints(aPoint: CGPoint, bPoint: CGPoint) {
+    updatePoint(using: &aPointLayer, point: aPoint)
+    updatePoint(using: &bPointLayer, point: bPoint)
+  }
+  
+  public func updatePointsForShapeWithThreePoints(aPoint: CGPoint, bPoint: CGPoint, cPoint: CGPoint) {
+    updatePoint(using: &aPointLayer, point: aPoint)
+    updatePoint(using: &bPointLayer, point: bPoint)
+    updatePoint(using: &cPointLayer, point: cPoint)
   }
   
   public func removeAllPointsFromLayer() {

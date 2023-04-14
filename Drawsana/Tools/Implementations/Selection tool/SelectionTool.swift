@@ -132,78 +132,47 @@ public class SelectionTool: DrawingTool {
     }
     
     if let selectedShape = context.toolSettings.selectedShape {
-      selectionPointAction = getIfDraggingResizePoint(
-        from: drawsanaView.convert(
-          point,
-          to: selectionToolIndicatorView),
-        shape: selectedShape)
-      
-      print("action: \(selectionPointAction)")
-      
-      if selectionPointAction == .movingAction {
-//        if selectedShape.hitTest(point: point) {
-//          isDraggingShape = true
-//          originalTransform = selectedShape.transform
-//          startPoint = point
-//        } else {
-//          selectionPointAction = nil
-//          isDraggingShape = false
-//          return
-//        }
-        
-        isDraggingShape = true
-        originalTransform = selectedShape.transform
-        startPoint = point
-      } else {
-        originalTransform = selectedShape.transform
-        isDraggingShape = false
+      if let selectedShape = context.toolSettings.selectedShape {
+        selectionPointAction = getIfDraggingResizePoint(
+          from: drawsanaView.convert(
+            point,
+            to: selectionToolIndicatorView),
+          shape: selectedShape)
+
+        if selectionPointAction == .movingAction {
+          if selectedShape.hitTest(point: point) {
+            isDraggingShape = true
+            originalTransform = selectedShape.transform
+            startPoint = point
+          } else {
+            selectionPointAction = nil
+            isDraggingShape = false
+            return
+          }
+        } else {
+          originalTransform = selectedShape.transform
+          isDraggingShape = false
+        }
       }
-      
-//      if selectedShape is ShapeWithTwoPoints {
-//        let castedShape = selectedShape as! ShapeWithTwoPoints
-//
-//        let aPointArea =  castedShape.getAPointArea(selectionRect: selectionToolIndicatorView.frame)
-//
-//        print("a: \(castedShape.a), area: \(aPointArea)")
-//
-//        let aLayer = CAShapeLayer()
-//        aLayer.frame = selectionToolIndicatorView.bounds
-//        aLayer.path = UIBezierPath(roundedRect: aPointArea, cornerRadius: 30).cgPath
-//        aLayer.fillColor = UIColor.blue.withAlphaComponent(0.5).cgColor
-//        selectionToolIndicatorView.layer.addSublayer(aLayer)
-//
-//        let bPointArea =  castedShape.getBPointArea(selectionRect: selectionToolIndicatorView.frame)
-//
-//        print("b: \(castedShape.b), area: \(bPointArea)")
-//
-//        let bLayer = CAShapeLayer()
-//        bLayer.frame = selectionToolIndicatorView.bounds
-//        bLayer.path = UIBezierPath(roundedRect: bPointArea, cornerRadius: 30).cgPath
-//        bLayer.fillColor = UIColor.blue.withAlphaComponent(0.5).cgColor
-//        selectionToolIndicatorView.layer.addSublayer(bLayer)
-//      }
-      
-//      isDraggingShape = true
-//      originalTransform = selectedShape.transform
-//      startPoint = point
     }
   }
   
   public func handleDragContinue(context: ToolOperationContext, point: CGPoint, velocity: CGPoint) {
-    guard
-      
-      let originalTransform = originalTransform,
-      let selectedShape = context.toolSettings.selectedShape,
-      let startPoint = startPoint else
-    {
+    guard var selectedShape = context.toolSettings.selectedShape else {
       isDraggingShape = false
       return
     }
     
-    if selectionPointAction == .movingAction {
+    if isDraggingShape {
+      guard
+        let originalTransform = originalTransform,
+        let startPoint = startPoint else
+      {
+        isDraggingShape = false
+        return
+      }
       let delta = CGPoint(x: point.x - startPoint.x, y: point.y - startPoint.y)
       selectedShape.transform = originalTransform.translated(by: delta)
-      updatedTransform = originalTransform.translated(by: delta)
       context.toolSettings.isPersistentBufferDirty = true
     } else {
       calculatePointChangeForPanGesture(point: point, shape: selectedShape)
@@ -230,27 +199,7 @@ public class SelectionTool: DrawingTool {
         transform: originalTransform,
         originalTransform: originalTransform))
       
-      if selectedShape is ShapeWithTwoPoints {
-        let castedShape = selectedShape as! ShapeWithTwoPoints
-        context.operationStack.apply(operation: ResizeShapeWithTwoPointsOperation(
-          shape: castedShape,
-          originalAPoint: castedShape.a,
-          originalBPoint: castedShape.b,
-          updatedAPoint: castedShape.a.applying(originalTransform.translated(by: delta).affineTransform),
-          updatedBPoint: castedShape.b.applying(originalTransform.translated(by: delta).affineTransform)
-        ))
-      } else if selectedShape is ShapeWithThreePoints {
-        let castedShape = selectedShape as! ShapeWithThreePoints
-        context.operationStack.apply(operation: ResizeShapeWithThreePointsOperation(
-          shape: castedShape,
-          originalAPoint: castedShape.a,
-          originalBPoint: castedShape.b,
-          originalCPoint: castedShape.c,
-          updatedAPoint: castedShape.a.applying(originalTransform.translated(by: delta).affineTransform),
-          updatedBPoint: castedShape.b.applying(originalTransform.translated(by: delta).affineTransform),
-          updatedCPoint: castedShape.c.applying(originalTransform.translated(by: delta).affineTransform)
-        ))
-      }
+      applyMovingOperation(shape: selectedShape, using: context, delta: delta)
       
       context.toolSettings.isPersistentBufferDirty = true
       updatedTransform = originalTransform.translated(by: delta)
@@ -261,26 +210,7 @@ public class SelectionTool: DrawingTool {
         transform: originalTransform,
         originalTransform: originalTransform))
       
-      if selectedShape is ShapeWithTwoPoints {
-        let castedShape = selectedShape as! ShapeWithTwoPoints
-        context.operationStack.apply(operation: ResizeShapeWithTwoPointsOperation(
-          shape: castedShape,
-          originalAPoint: originalAPoint!,
-          originalBPoint: originalBPoint!,
-          updatedAPoint: castedShape.a,
-          updatedBPoint: castedShape.b))
-      } else if selectedShape is ShapeWithThreePoints {
-        let castedShape = selectedShape as! ShapeWithThreePoints
-        context.operationStack.apply(operation: ResizeShapeWithThreePointsOperation(
-          shape: castedShape,
-          originalAPoint: originalAPoint!,
-          originalBPoint: originalBPoint!,
-          originalCPoint: originalCPoint!,
-          updatedAPoint: castedShape.a,
-          updatedBPoint: castedShape.b,
-          updatedCPoint: castedShape.c
-        ))
-      }
+      applyEditOperation(shape: selectedShape, using: context, delta: delta)
       
       context.toolSettings.isPersistentBufferDirty = true
       updatedTransform = originalTransform.translated(by: delta)
@@ -350,6 +280,8 @@ public class SelectionTool: DrawingTool {
         return .aPoint
       } else if castedShape.getBPointArea().contains(point) {
         return .bPoint
+      } else if castedShape.getCPointArea().contains(point) {
+        return .cPoint
       }
     }
     
@@ -386,6 +318,7 @@ public class SelectionTool: DrawingTool {
       default:
         break
       }
+      selectionToolIndicatorView.updatePointsForShapeWithTwoPoints(aPoint: castedShape.a, bPoint: castedShape.b)
     } else if shape is ShapeWithThreePoints {
       var castedShape = shape as! ShapeWithThreePoints
       switch selectionPointAction {
@@ -398,6 +331,54 @@ public class SelectionTool: DrawingTool {
       default:
         break
       }
+      selectionToolIndicatorView.updatePointsForShapeWithThreePoints(aPoint: castedShape.a, bPoint: castedShape.b, cPoint: castedShape.c)
+    }
+  }
+  
+  private func applyMovingOperation(shape: ShapeSelectable, using context: ToolOperationContext, delta: CGPoint) {
+    if shape is ShapeWithTwoPoints {
+      let castedShape = shape as! ShapeWithTwoPoints
+      context.operationStack.apply(operation: ResizeShapeWithTwoPointsOperation(
+        shape: castedShape,
+        originalAPoint: castedShape.a,
+        originalBPoint: castedShape.b,
+        updatedAPoint: castedShape.a.applying(originalTransform!.translated(by: delta).affineTransform),
+        updatedBPoint: castedShape.b.applying(originalTransform!.translated(by: delta).affineTransform)
+      ))
+    } else if shape is ShapeWithThreePoints {
+      let castedShape = shape as! ShapeWithThreePoints
+      context.operationStack.apply(operation: ResizeShapeWithThreePointsOperation(
+        shape: castedShape,
+        originalAPoint: castedShape.a,
+        originalBPoint: castedShape.b,
+        originalCPoint: castedShape.c,
+        updatedAPoint: castedShape.a.applying(originalTransform!.translated(by: delta).affineTransform),
+        updatedBPoint: castedShape.b.applying(originalTransform!.translated(by: delta).affineTransform),
+        updatedCPoint: castedShape.c.applying(originalTransform!.translated(by: delta).affineTransform)
+      ))
+    }
+  }
+  
+  private func applyEditOperation(shape: ShapeSelectable, using context: ToolOperationContext, delta: CGPoint) {
+    if shape is ShapeWithTwoPoints {
+      let castedShape = shape as! ShapeWithTwoPoints
+      context.operationStack.apply(operation: ResizeShapeWithTwoPointsOperation(
+        shape: castedShape,
+        originalAPoint: originalAPoint!,
+        originalBPoint: originalBPoint!,
+        updatedAPoint: castedShape.a,
+        updatedBPoint: castedShape.b))
+    } else if shape is ShapeWithThreePoints {
+      let castedShape = shape as! ShapeWithThreePoints
+      context.operationStack.apply(operation: ResizeShapeWithThreePointsOperation(
+        shape: castedShape,
+        originalAPoint: originalAPoint!,
+        originalBPoint: originalBPoint!,
+        originalCPoint: originalCPoint!,
+        updatedAPoint: castedShape.a,
+        updatedBPoint: castedShape.b,
+        updatedCPoint: castedShape.c
+      ))
     }
   }
 }
