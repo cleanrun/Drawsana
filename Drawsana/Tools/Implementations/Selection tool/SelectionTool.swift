@@ -39,6 +39,15 @@ public class SelectionTool: DrawingTool {
   private var updatedBPoint: CGPoint?
   private var updatedCPoint: CGPoint?
   
+  private var middlePoint: CGPoint?
+  
+  private var originalADistanceFromMiddle: CGFloat?
+  private var originalBDistanceFromMiddle: CGFloat?
+  private var originalCDistanceFromMiddle: CGFloat?
+  private var originalAAngle: CGFloat?
+  private var originalBAngle: CGFloat?
+  private var originalCAngle: CGFloat?
+  
   private var originalTransform: ShapeTransform?
   private var updatedTransform: ShapeTransform?
   private var startPoint: CGPoint?
@@ -115,11 +124,6 @@ public class SelectionTool: DrawingTool {
       .filter({ $0.hitTest(point: point) })
       .last {
       setResizePoints(shape: shape)
-      
-      if shape is ShapeWithTwoPoints {
-        let castedShape = shape as! ShapeWithTwoPoints
-        print("shape is two points, a: \(castedShape.a), b: \(castedShape.b)")
-      }
     } else {
       removeResizePoints()
     }
@@ -210,7 +214,7 @@ public class SelectionTool: DrawingTool {
         transform: originalTransform,
         originalTransform: originalTransform))
       
-      applyEditOperation(shape: selectedShape, using: context, delta: delta)
+      applyEditOperation(shape: selectedShape, using: context)
       
       context.toolSettings.isPersistentBufferDirty = true
       updatedTransform = originalTransform.translated(by: delta)
@@ -227,20 +231,92 @@ public class SelectionTool: DrawingTool {
     context.toolSettings.isPersistentBufferDirty = true
   }
   
-  public func handlePinchStart(context: ToolOperationContext, startPoint: CGPoint, endPoint: CGPoint) {
-    // FIXME: This tool doesn't support pinch gestures
+  public func handlePinchStart(context: ToolOperationContext, startPoint: CGPoint, endPoint: CGPoint, scale: CGFloat) {
+    guard let selectedShape = context.toolSettings.selectedShape else { return }
+    
+    if selectedShape is ShapeWithTwoPoints {
+      let castedShape = selectedShape as! ShapeWithTwoPoints
+      originalAPoint = castedShape.a
+      originalBPoint = castedShape.b
+      middlePoint = CGPointGetMiddlePoint(castedShape.a, castedShape.b)
+      originalADistanceFromMiddle = CGPointGetDistanceBetweenPoints(castedShape.a, middlePoint!)
+      originalBDistanceFromMiddle = CGPointGetDistanceBetweenPoints(castedShape.b, middlePoint!)
+      originalAAngle = castedShape.a.getAngleFromPoint(middlePoint!)
+      originalBAngle = castedShape.b.getAngleFromPoint(middlePoint!)
+    } else if selectedShape is ShapeWithThreePoints {
+      let castedShape = selectedShape as! ShapeWithThreePoints
+      originalAPoint = castedShape.a
+      originalBPoint = castedShape.b
+      originalCPoint = castedShape.c
+      middlePoint = CGPointGetMiddlePoint(castedShape.a, castedShape.b, castedShape.c)
+      originalADistanceFromMiddle = CGPointGetDistanceBetweenPoints(castedShape.a, middlePoint!)
+      originalBDistanceFromMiddle = CGPointGetDistanceBetweenPoints(castedShape.b, middlePoint!)
+      originalCDistanceFromMiddle = CGPointGetDistanceBetweenPoints(castedShape.c, middlePoint!)
+      originalAAngle = castedShape.a.getAngleFromPoint(middlePoint!)
+      originalBAngle = castedShape.b.getAngleFromPoint(middlePoint!)
+      originalCAngle = castedShape.c.getAngleFromPoint(middlePoint!)
+    }
   }
   
-  public func handlePinchContinue(context: ToolOperationContext, startPoint: CGPoint, endPoint: CGPoint) {
-    // FIXME: This tool doesn't support pinch gestures
+  public func handlePinchContinue(context: ToolOperationContext, startPoint: CGPoint, endPoint: CGPoint, scale: CGFloat) {
+    guard let selectedShape = context.toolSettings.selectedShape else { return }
+    
+    calculatePointChangeForResizeGesture(shape: selectedShape, scale: scale)
+
+    context.toolSettings.isPersistentBufferDirty = true
   }
   
-  public func handlePinchEnd(context: ToolOperationContext, startPoint: CGPoint, endPoint: CGPoint) {
-    // FIXME: This tool doesn't support pinch gestures
+  public func handlePinchEnd(context: ToolOperationContext, startPoint: CGPoint, endPoint: CGPoint, scale: CGFloat) {
+    guard let selectedShape = context.toolSettings.selectedShape else { return }
+    
+    applyEditOperation(shape: selectedShape, using: context)
+
+    context.toolSettings.isPersistentBufferDirty = true
+    removeOriginalPoints()
   }
   
-  public func handlePinchCancel(context: ToolOperationContext, startPoint: CGPoint, endPoint: CGPoint) {
-    // FIXME: This tool doesn't support pinch gestures
+  public func handlePinchCancel(context: ToolOperationContext, startPoint: CGPoint, endPoint: CGPoint, scale: CGFloat) {
+    handlePinchEnd(context: context, startPoint: startPoint, endPoint: endPoint, scale: scale)
+  }
+  
+  public func handleRotateStart(context: ToolOperationContext, angle radians: CGFloat) {
+    guard let selectedShape = context.toolSettings.selectedShape else { return }
+    
+    if selectedShape is ShapeWithTwoPoints {
+      let castedShape = selectedShape as! ShapeWithTwoPoints
+      originalAPoint = castedShape.a
+      originalBPoint = castedShape.b
+      middlePoint = CGPointGetMiddlePoint(castedShape.a, castedShape.b)
+    } else if selectedShape is ShapeWithThreePoints {
+      let castedShape = selectedShape as! ShapeWithThreePoints
+      originalAPoint = castedShape.a
+      originalBPoint = castedShape.b
+      originalCPoint = castedShape.c
+      middlePoint = CGPointGetMiddlePoint(castedShape.a, castedShape.b, castedShape.c)
+    }
+    
+    //originalTransform = selectedShape.transform
+  }
+  
+  public func handleRotateContinue(context: ToolOperationContext, angle radians: CGFloat) {
+    guard
+      let selectedShape = context.toolSettings.selectedShape
+    else { return }
+    
+    calculatePointChangeForRotationGesture(shape: selectedShape, angle: radians)
+    
+    context.toolSettings.isPersistentBufferDirty = true
+  }
+  
+  public func handleRotateEnd(context: ToolOperationContext, angle radians: CGFloat) {
+    guard
+      let selectedShape = context.toolSettings.selectedShape
+    else { return }
+    
+    applyEditOperation(shape: selectedShape, using: context)
+    
+    context.toolSettings.isPersistentBufferDirty = true
+    removeOriginalPoints()
   }
 
   /// Update selection on context.toolSettings, but make sure that when apply()
@@ -305,11 +381,18 @@ public class SelectionTool: DrawingTool {
     originalAPoint = nil
     originalBPoint = nil
     originalCPoint = nil
+    middlePoint = nil
+    originalADistanceFromMiddle = nil
+    originalBDistanceFromMiddle = nil
+    originalCDistanceFromMiddle = nil
+    originalAAngle = nil
+    originalBAngle = nil
+    originalCAngle = nil
   }
   
   private func calculatePointChangeForPanGesture(point: CGPoint, shape: ShapeSelectable) {
     if shape is ShapeWithTwoPoints {
-      var castedShape = shape as! ShapeWithTwoPoints
+      let castedShape = shape as! ShapeWithTwoPoints
       switch selectionPointAction {
       case .aPoint:
         castedShape.a = point
@@ -320,7 +403,7 @@ public class SelectionTool: DrawingTool {
       }
       selectionToolIndicatorView.updatePointsForShapeWithTwoPoints(aPoint: castedShape.a, bPoint: castedShape.b)
     } else if shape is ShapeWithThreePoints {
-      var castedShape = shape as! ShapeWithThreePoints
+      let castedShape = shape as! ShapeWithThreePoints
       switch selectionPointAction {
       case .aPoint:
         castedShape.a = point
@@ -332,6 +415,73 @@ public class SelectionTool: DrawingTool {
         break
       }
       selectionToolIndicatorView.updatePointsForShapeWithThreePoints(aPoint: castedShape.a, bPoint: castedShape.b, cPoint: castedShape.c)
+    }
+  }
+  
+  private func calculatePointChangeForRotationGesture(shape: ShapeSelectable, angle radians: CGFloat) {
+    if shape is ShapeWithTwoPoints {
+      let castedShape = shape as! ShapeWithTwoPoints
+      if
+        let originalAPoint,
+        let originalBPoint,
+        let middlePoint {
+        castedShape.a = originalAPoint.getRotatedPoint(from: middlePoint, angle: radians)
+        castedShape.b = originalBPoint.getRotatedPoint(from: middlePoint, angle: radians)
+        selectionToolIndicatorView.updatePointsForShapeWithTwoPoints(
+          aPoint: castedShape.a,
+          bPoint: castedShape.b)
+      }
+    } else if shape is ShapeWithThreePoints {
+      let castedShape = shape as! ShapeWithThreePoints
+      if
+        let originalAPoint,
+        let originalBPoint,
+        let originalCPoint,
+        let middlePoint {
+        castedShape.a = originalAPoint.getRotatedPoint(from: middlePoint, angle: radians)
+        castedShape.b = originalBPoint.getRotatedPoint(from: middlePoint, angle: radians)
+        castedShape.c = originalCPoint.getRotatedPoint(from: middlePoint, angle: radians)
+        selectionToolIndicatorView.updatePointsForShapeWithThreePoints(
+          aPoint: castedShape.a,
+          bPoint: castedShape.b,
+          cPoint: castedShape.c)
+      }
+    }
+  }
+  
+  private func calculatePointChangeForResizeGesture(shape: ShapeSelectable, scale: CGFloat) {
+    if shape is ShapeWithTwoPoints {
+      let castedShape = shape as! ShapeWithTwoPoints
+      if
+        let originalADistanceFromMiddle,
+        let originalBDistanceFromMiddle,
+        let middlePoint,
+        let originalAAngle,
+        let originalBAngle {
+        castedShape.a = CGPointGetPointFromPoint(middlePoint, originalADistanceFromMiddle * scale, originalAAngle)
+        castedShape.b = CGPointGetPointFromPoint(middlePoint, originalBDistanceFromMiddle * scale, originalBAngle)
+        selectionToolIndicatorView.updatePointsForShapeWithTwoPoints(
+          aPoint: castedShape.a,
+          bPoint: castedShape.b)
+      }
+    } else if shape is ShapeWithThreePoints {
+      let castedShape = shape as! ShapeWithThreePoints
+      if
+        let originalADistanceFromMiddle,
+        let originalBDistanceFromMiddle,
+        let originalCDistanceFromMiddle,
+        let middlePoint,
+        let originalAAngle,
+        let originalBAngle,
+        let originalCAngle {
+        castedShape.a = CGPointGetPointFromPoint(middlePoint, originalADistanceFromMiddle * scale, originalAAngle)
+        castedShape.b = CGPointGetPointFromPoint(middlePoint, originalBDistanceFromMiddle * scale, originalBAngle)
+        castedShape.c = CGPointGetPointFromPoint(middlePoint, originalCDistanceFromMiddle * scale, originalCAngle)
+        selectionToolIndicatorView.updatePointsForShapeWithThreePoints(
+          aPoint: castedShape.a,
+          bPoint: castedShape.b,
+          cPoint: castedShape.c)
+      }
     }
   }
   
@@ -359,7 +509,7 @@ public class SelectionTool: DrawingTool {
     }
   }
   
-  private func applyEditOperation(shape: ShapeSelectable, using context: ToolOperationContext, delta: CGPoint) {
+  private func applyEditOperation(shape: ShapeSelectable, using context: ToolOperationContext) {
     if shape is ShapeWithTwoPoints {
       let castedShape = shape as! ShapeWithTwoPoints
       context.operationStack.apply(operation: ResizeShapeWithTwoPointsOperation(

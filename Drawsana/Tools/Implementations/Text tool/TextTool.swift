@@ -52,14 +52,19 @@ public class TextTool: NSObject, DrawingTool {
   private var dragHandler: DragHandler?
   private var selectedShape: TextShape?
   private var originalText = ""
+  private var originalTransform: ShapeTransform?
+  private var originalBoundingRect: CGRect?
   private var maxWidth: CGFloat = 320  // updated from drawing.size
   private weak var shapeUpdater: DrawsanaViewShapeUpdating?
   // internal for use by DragHandler subclasses
   internal lazy var editingView: TextShapeEditingView = makeTextView()
+  
+  private var drawingView: DrawsanaView!
 
-  public init(delegate: TextToolDelegate? = nil) {
+  public init(delegate: TextToolDelegate? = nil, using drawingView: DrawsanaView) {
     super.init()
     self.delegate = delegate
+    self.drawingView = drawingView
   }
 
   // MARK: Tool lifecycle
@@ -164,19 +169,19 @@ public class TextTool: NSObject, DrawingTool {
     }
   }
   
-  public func handlePinchStart(context: ToolOperationContext, startPoint: CGPoint, endPoint: CGPoint) {
+  public func handlePinchStart(context: ToolOperationContext, startPoint: CGPoint, endPoint: CGPoint, scale: CGFloat) {
     // FIXME: This tool doesn't support pinch gestures
   }
   
-  public func handlePinchContinue(context: ToolOperationContext, startPoint: CGPoint, endPoint: CGPoint) {
+  public func handlePinchContinue(context: ToolOperationContext, startPoint: CGPoint, endPoint: CGPoint, scale: CGFloat) {
     // FIXME: This tool doesn't support pinch gestures
   }
   
-  public func handlePinchEnd(context: ToolOperationContext, startPoint: CGPoint, endPoint: CGPoint) {
+  public func handlePinchEnd(context: ToolOperationContext, startPoint: CGPoint, endPoint: CGPoint, scale: CGFloat) {
     // FIXME: This tool doesn't support pinch gestures
   }
   
-  public func handlePinchCancel(context: ToolOperationContext, startPoint: CGPoint, endPoint: CGPoint) {
+  public func handlePinchCancel(context: ToolOperationContext, startPoint: CGPoint, endPoint: CGPoint, scale: CGFloat) {
     // FIXME: This tool doesn't support pinch gestures
   }
 

@@ -62,16 +62,16 @@ public protocol DrawingTool: AnyObject {
   func handleDragCancel(context: ToolOperationContext, point: CGPoint)
   
   /// User has started to pinch on the drawing
-  func handlePinchStart(context: ToolOperationContext, startPoint: CGPoint, endPoint: CGPoint)
+  func handlePinchStart(context: ToolOperationContext, startPoint: CGPoint, endPoint: CGPoint, scale: CGFloat)
   
   /// User has changed their pinch position on the drawing
-  func handlePinchContinue(context: ToolOperationContext, startPoint: CGPoint, endPoint: CGPoint)
+  func handlePinchContinue(context: ToolOperationContext, startPoint: CGPoint, endPoint: CGPoint, scale: CGFloat)
   
   /// User has ended the pinch on the drawing
-  func handlePinchEnd(context: ToolOperationContext, startPoint: CGPoint, endPoint: CGPoint)
+  func handlePinchEnd(context: ToolOperationContext, startPoint: CGPoint, endPoint: CGPoint, scale: CGFloat)
   
   /// The pinch gesture has canceled for some reason
-  func handlePinchCancel(context: ToolOperationContext, startPoint: CGPoint, endPoint: CGPoint)
+  func handlePinchCancel(context: ToolOperationContext, startPoint: CGPoint, endPoint: CGPoint, scale: CGFloat)
 
   /// User settings have changed. Update any local state or the shape, if
   /// relevant. The default implementation does nothing.

@@ -69,7 +69,7 @@ class ViewController: UIViewController {
 
   /// Instance of `TextTool` for which we are the delegate, so we can respond
   /// to relevant UI events
-  lazy var textTool = { return TextTool(delegate: self) }()
+  lazy var textTool = { return TextTool(delegate: self, using: drawingView) }()
 
   /// Instance of `SelectionTool` for which we are the delegate, so we can
   /// respond to relevant UI events

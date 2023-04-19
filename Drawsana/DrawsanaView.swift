@@ -140,6 +140,7 @@ public class DrawsanaView: UIView {
   
   private var immediatePanGestureRecognizer: ImmediatePanGestureRecognizer!
   private var pinchGestureRecognizer: UIPinchGestureRecognizer!
+  private var rotationGestureRecognizer: UIRotationGestureRecognizer!
   
   /// This tuple is to store the last tracked Points of a drawing created from the pinch gesture.
   /// Because most of the time, when the user lifts their fingers after performing a pinch gesture,
@@ -209,12 +210,15 @@ public class DrawsanaView: UIView {
     
     immediatePanGestureRecognizer = ImmediatePanGestureRecognizer(target: self, action: #selector(didPan(sender:)))
     pinchGestureRecognizer = UIPinchGestureRecognizer(target: self, action: #selector(didPinch(_:)))
+    rotationGestureRecognizer = UIRotationGestureRecognizer(target: self, action: #selector(didRotate(_:)))
     
     immediatePanGestureRecognizer.delegate = self
     pinchGestureRecognizer.delegate = self
+    rotationGestureRecognizer.delegate = self
     
     addGestureRecognizer(immediatePanGestureRecognizer)
     addGestureRecognizer(pinchGestureRecognizer)
+    //addGestureRecognizer(rotationGestureRecognizer)
   }
   
   public override func layoutSubviews() {
@@ -343,7 +347,7 @@ public class DrawsanaView: UIView {
     
     if sender.numberOfTouches < 2 {
       guard let lastTrackedPoints else { return }
-      shapeTool.handlePinchEnd(context: toolOperationContext, startPoint: lastTrackedPoints.0, endPoint: lastTrackedPoints.1)
+      shapeTool.handlePinchEnd(context: toolOperationContext, startPoint: lastTrackedPoints.0, endPoint: lastTrackedPoints.1, scale: 1)
       reapplyLayerContents()
       return
     }
@@ -373,16 +377,64 @@ public class DrawsanaView: UIView {
       } else {
         transientBuffer = nil
       }
-      shapeTool.handlePinchStart(context: toolOperationContext, startPoint: startPoint, endPoint: endPoint)
+      shapeTool.handlePinchStart(context: toolOperationContext, startPoint: startPoint, endPoint: endPoint, scale: sender.scale)
       delegate?.drawsanaView(self, didStartDragWith: shapeTool)
       updateUncommittedShapeBuffers()
     case .changed:
-      shapeTool.handlePinchContinue(context: toolOperationContext, startPoint: startPoint, endPoint: endPoint)
+      shapeTool.handlePinchContinue(context: toolOperationContext, startPoint: startPoint, endPoint: endPoint, scale: sender.scale)
       updateUncommittedShapeBuffers()
     case .ended, .failed, .cancelled:
-      shapeTool.handlePinchEnd(context: toolOperationContext, startPoint: startPoint, endPoint: endPoint)
+      shapeTool.handlePinchEnd(context: toolOperationContext, startPoint: startPoint, endPoint: endPoint, scale: sender.scale)
       reapplyLayerContents()
       lastTrackedPoints = nil
+    default:
+      break
+    }
+    
+    applyToolSettingsChanges()
+  }
+  
+  @objc private func didRotate(_ sender: UIRotationGestureRecognizer) {
+    autoreleasepool { _didRotate(sender) }
+  }
+  
+  private func _didRotate(_ sender: UIRotationGestureRecognizer) {
+    guard
+      let tool,
+      tool is SelectionTool,
+      sender.numberOfTouches >= 2
+    else { return }
+    
+    let shapeTool = tool as! SelectionTool
+    let angle = sender.rotation
+    
+    let updateUncommitedShapeBuffers: () -> Void = {
+      self.transientBufferWithShapeInProgress = DrawsanaUtilities.renderImage(size: self.drawing.size) {
+        self.transientBuffer?.draw(at: .zero)
+        self.tool?.renderShapeInProgress(transientContext: $0)
+      }
+      self.drawingContentView.layer.contents = self.transientBufferWithShapeInProgress?.cgImage
+      if self.tool?.isProgressive == true {
+        self.transientBuffer = self.transientBufferWithShapeInProgress
+      }
+    }
+    
+    switch sender.state {
+    case .began:
+      if let persistentBuffer, let cgImage = persistentBuffer.cgImage {
+        transientBuffer = UIImage(
+          cgImage: cgImage,
+          scale: persistentBuffer.scale,
+          orientation: persistentBuffer.imageOrientation)
+      } else {
+        transientBuffer = nil
+      }
+      shapeTool.handleRotateStart(context: toolOperationContext, angle: angle)
+      updateUncommitedShapeBuffers()
+    case .changed:
+      shapeTool.handleRotateContinue(context: toolOperationContext, angle: angle)
+    case .ended, .failed, .cancelled:
+      shapeTool.handleRotateEnd(context: toolOperationContext, angle: angle)
     default:
       break
     }

@@ -8,10 +8,17 @@
 import CoreGraphics
 
 extension CGFloat {
-    var radians: CGFloat {
-        get {
-            let b = CGFloat(Double.pi) * self/180
-            return b
-        }
+  var radians: CGFloat {
+    get {
+      let b = CGFloat(Double.pi) * self/180
+      return b
     }
+  }
+  
+  var degrees: CGFloat {
+    get {
+      let d = self * 180 / CGFloat(Double.pi)
+      return d
+    }
+  }
 }

@@ -56,19 +56,19 @@ open class DrawingToolForShapeWithTwoPoints: DrawingTool {
     shapeInProgress = nil
   }
   
-  public func handlePinchStart(context: ToolOperationContext, startPoint: CGPoint, endPoint: CGPoint) {
+  public func handlePinchStart(context: ToolOperationContext, startPoint: CGPoint, endPoint: CGPoint, scale: CGFloat) {
     shapeInProgress = makeShape()
     shapeInProgress?.a = startPoint
     shapeInProgress?.b = endPoint
     shapeInProgress?.apply(userSettings: context.userSettings)
   }
   
-  public func handlePinchContinue(context: ToolOperationContext, startPoint: CGPoint, endPoint: CGPoint) {
+  public func handlePinchContinue(context: ToolOperationContext, startPoint: CGPoint, endPoint: CGPoint, scale: CGFloat) {
     shapeInProgress?.a = startPoint
     shapeInProgress?.b = endPoint
   }
   
-  public func handlePinchEnd(context: ToolOperationContext, startPoint: CGPoint, endPoint: CGPoint) {
+  public func handlePinchEnd(context: ToolOperationContext, startPoint: CGPoint, endPoint: CGPoint, scale: CGFloat) {
     guard var shape = shapeInProgress else { return }
     shape.a = startPoint
     shape.b = endPoint
@@ -76,8 +76,8 @@ open class DrawingToolForShapeWithTwoPoints: DrawingTool {
     shapeInProgress = nil
   }
   
-  public func handlePinchCancel(context: ToolOperationContext, startPoint: CGPoint, endPoint: CGPoint) {
-    handlePinchEnd(context: context, startPoint: startPoint, endPoint: endPoint)
+  public func handlePinchCancel(context: ToolOperationContext, startPoint: CGPoint, endPoint: CGPoint, scale: CGFloat) {
+    handlePinchEnd(context: context, startPoint: startPoint, endPoint: endPoint, scale: scale)
   }
 
   public func renderShapeInProgress(transientContext: CGContext) {
