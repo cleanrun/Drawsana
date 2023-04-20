@@ -329,12 +329,13 @@ public class SelectionTool: DrawingTool {
   }
   
   private func setResizePoints(shape: ShapeSelectable) {
+    let pointColor = getShapeStrokeColor(shape: shape)
     if shape is ShapeWithTwoPoints {
       let castedShape = shape as! ShapeWithTwoPoints
-      selectionToolIndicatorView.configurePointsForShapeWithTwoPoints(aPoint: castedShape.a, bPoint: castedShape.b)
+      selectionToolIndicatorView.configurePointsForShapeWithTwoPoints(aPoint: castedShape.a, bPoint: castedShape.b, color: pointColor)
     } else if shape is ShapeWithThreePoints {
       let castedShape = shape as! ShapeWithThreePoints
-      selectionToolIndicatorView.configurePointsForShapeWithThreePoints(aPoint: castedShape.a, bPoint: castedShape.b, cPoint: castedShape.c)
+      selectionToolIndicatorView.configurePointsForShapeWithThreePoints(aPoint: castedShape.a, bPoint: castedShape.b, cPoint: castedShape.c, color: pointColor)
     }
   }
   
@@ -388,6 +389,18 @@ public class SelectionTool: DrawingTool {
     originalAAngle = nil
     originalBAngle = nil
     originalCAngle = nil
+  }
+  
+  private func getShapeStrokeColor(shape: ShapeSelectable) -> UIColor {
+    if shape is ShapeWithStrokeState {
+      let castedShape = shape as! ShapeWithStrokeState
+      return castedShape.strokeColor
+    } else if shape is ShapeWithStandardState {
+      let castedShape = shape as! ShapeWithStandardState
+      return castedShape.strokeColor ?? .black
+    } else {
+      return .black
+    }
   }
   
   private func calculatePointChangeForPanGesture(point: CGPoint, shape: ShapeSelectable) {

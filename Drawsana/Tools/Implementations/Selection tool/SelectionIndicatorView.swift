@@ -56,7 +56,7 @@ public class SelectionIndicatorView: UIView {
     layer.addSublayer(selectionLayer)
   }
   
-  private func configurePoint(using pointLayer: inout CAShapeLayer, point: CGPoint) {
+  private func configurePoint(using pointLayer: inout CAShapeLayer, point: CGPoint, color: UIColor) {
     let rect = CGRect(
       x: point.x - frame.minX - pointCornerRadius,
       y: point.y - frame.minY - pointCornerRadius,
@@ -65,7 +65,7 @@ public class SelectionIndicatorView: UIView {
     
     pointLayer.frame = bounds
     pointLayer.path = UIBezierPath(roundedRect: rect, cornerRadius: pointCornerRadius).cgPath
-    pointLayer.fillColor = UIColor.black.cgColor
+    pointLayer.fillColor = color.cgColor
   }
   
   private func updatePoint(using pointLayer: inout CAShapeLayer, point: CGPoint) {
@@ -79,18 +79,18 @@ public class SelectionIndicatorView: UIView {
     pointLayer.setNeedsDisplay()
   }
   
-  public func configurePointsForShapeWithTwoPoints(aPoint: CGPoint, bPoint: CGPoint) {
-    configurePoint(using: &aPointLayer, point: aPoint)
-    configurePoint(using: &bPointLayer, point: bPoint)
+  public func configurePointsForShapeWithTwoPoints(aPoint: CGPoint, bPoint: CGPoint, color: UIColor = .black) {
+    configurePoint(using: &aPointLayer, point: aPoint, color: color)
+    configurePoint(using: &bPointLayer, point: bPoint, color: color)
     
     layer.addSublayer(aPointLayer)
     layer.addSublayer(bPointLayer)
   }
   
-  public func configurePointsForShapeWithThreePoints(aPoint: CGPoint, bPoint: CGPoint, cPoint: CGPoint) {
-    configurePoint(using: &aPointLayer, point: aPoint)
-    configurePoint(using: &bPointLayer, point: bPoint)
-    configurePoint(using: &cPointLayer, point: cPoint)
+  public func configurePointsForShapeWithThreePoints(aPoint: CGPoint, bPoint: CGPoint, cPoint: CGPoint, color: UIColor = .black) {
+    configurePoint(using: &aPointLayer, point: aPoint, color: color)
+    configurePoint(using: &bPointLayer, point: bPoint, color: color)
+    configurePoint(using: &cPointLayer, point: cPoint, color: color)
     
     layer.addSublayer(aPointLayer)
     layer.addSublayer(bPointLayer)
