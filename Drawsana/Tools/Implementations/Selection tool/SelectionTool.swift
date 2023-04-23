@@ -66,6 +66,8 @@ public class SelectionTool: DrawingTool {
 
   private var isUpdatingSelection = false
   
+  private var isResizeGestureEnabled = false
+  
   private var selectionPointAction: SelectionPointAction?
   
   private var selectionToolIndicatorView: SelectionIndicatorView!
@@ -232,6 +234,8 @@ public class SelectionTool: DrawingTool {
   }
   
   public func handlePinchStart(context: ToolOperationContext, startPoint: CGPoint, endPoint: CGPoint, scale: CGFloat) {
+    guard isResizeGestureEnabled else { return }
+    
     guard let selectedShape = context.toolSettings.selectedShape else { return }
     
     if selectedShape is ShapeWithTwoPoints {
@@ -259,6 +263,8 @@ public class SelectionTool: DrawingTool {
   }
   
   public func handlePinchContinue(context: ToolOperationContext, startPoint: CGPoint, endPoint: CGPoint, scale: CGFloat) {
+    guard isResizeGestureEnabled else { return }
+    
     guard let selectedShape = context.toolSettings.selectedShape else { return }
     
     calculatePointChangeForResizeGesture(shape: selectedShape, scale: scale)
@@ -267,6 +273,8 @@ public class SelectionTool: DrawingTool {
   }
   
   public func handlePinchEnd(context: ToolOperationContext, startPoint: CGPoint, endPoint: CGPoint, scale: CGFloat) {
+    guard isResizeGestureEnabled else { return }
+    
     guard let selectedShape = context.toolSettings.selectedShape else { return }
     
     applyEditOperation(shape: selectedShape, using: context)

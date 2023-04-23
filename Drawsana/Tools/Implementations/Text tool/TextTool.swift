@@ -30,6 +30,12 @@ public protocol TextToolDelegate: AnyObject {
   /// the text, you'll need to do some math and apply some inverse scaling
   /// transforms here.
   func textToolDidUpdateEditingViewTransform(_ editingView: TextShapeEditingView, transform: ShapeTransform)
+  
+  /// The user has tapped the text view and it would go to editting mode.
+  /// Implement this to present or configure your own editting view. The purpose
+  /// of this delegate function is to unblock the text view if the text view is
+  /// positioned under or behind the keyboard.
+  func textToolShowEditingView(_ shape: TextShape)
 }
 
 public class TextTool: NSObject, DrawingTool {
@@ -99,6 +105,7 @@ public class TextTool: NSObject, DrawingTool {
     } else if shape.hitTest(point: point) {
       // TODO: Forward tap to editingView.textView somehow, or manually set
       // the cursor point
+      beginEditing(shape: selectedShape!, context: context, activateTextView: true)
     } else {
       finishEditing(context: context)
       selectedShape = nil
@@ -109,7 +116,7 @@ public class TextTool: NSObject, DrawingTool {
 
   private func handleTapWhenNoShapeIsActive(context: ToolOperationContext, point: CGPoint) {
     if let tappedShape = context.drawing.getShape(of: TextShape.self, at: point) {
-      beginEditing(shape: tappedShape, context: context)
+      beginEditing(shape: tappedShape, context: context, activateTextView: false)
       context.toolSettings.isPersistentBufferDirty = true
     } else {
       let newShape = TextShape()
@@ -197,7 +204,7 @@ public class TextTool: NSObject, DrawingTool {
 
   // MARK: Helpers: begin/end editing actions
 
-  private func beginEditing(shape: TextShape, context: ToolOperationContext) {
+  private func beginEditing(shape: TextShape, context: ToolOperationContext, activateTextView: Bool = true) {
     // Remember values
     originalText = shape.text
     maxWidth = max(maxWidth, context.drawing.size.width)
@@ -214,7 +221,9 @@ public class TextTool: NSObject, DrawingTool {
 
     // Prepare interactive editing view
     context.toolSettings.interactiveView = editingView
-    editingView.becomeFirstResponder()
+    if activateTextView {
+      editingView.becomeFirstResponder()
+    }
   }
 
   /// If shape text has changed, notify operation stack so that undo works
@@ -341,6 +350,14 @@ public class TextTool: NSObject, DrawingTool {
     }
     return editingView
   }
+  
+  public func applyEditing(context: ToolOperationContext, text: String) {
+    guard let shape = selectedShape else { return }
+    shape.text = text
+    updateShapeFrame()
+    shapeUpdater?.rerenderAllShapesInefficiently()
+    finishEditing(context: context)
+  }
 }
 
 extension TextTool: UITextViewDelegate {
@@ -358,6 +375,8 @@ extension TextTool: UITextViewDelegate {
 
   public func textViewDidBeginEditing(_ textView: UITextView) {
     selectedShape?.isBeingEdited = true
+    textView.resignFirstResponder()
+    delegate?.textToolShowEditingView(selectedShape!)
   }
 
   public func textViewShouldEndEditing(_ textView: UITextView) -> Bool {

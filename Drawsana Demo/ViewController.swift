@@ -367,6 +367,13 @@ extension ViewController: SelectionToolDelegate {
 }
 
 extension ViewController: TextToolDelegate {
+  func textToolShowEditingView(_ shape: TextShape) {
+    let vc = TextToolEditingViewController(originalText: shape.text, dismissalCallback: { [unowned self] text in
+      self.textTool.applyEditing(context: drawingView.toolOperationContext, text: text)
+    })
+    self.present(vc, animated: false)
+  }
+  
   /// Don't modify text point. In reality you probably do want to modify it to
   /// make sure it's not below the keyboard.
   func textToolPointForNewText(tappedPoint: CGPoint) -> CGPoint {
@@ -376,7 +383,7 @@ extension ViewController: TextToolDelegate {
   /// When user taps away from text, switch to the selection tool so they can
   /// tap anything they want.
   func textToolDidTapAway(tappedPoint: CGPoint) {
-    drawingView.set(tool: self.selectionTool)
+    //drawingView.set(tool: self.selectionTool)
   }
 
   func textToolWillUseEditingView(_ editingView: TextShapeEditingView) {

@@ -71,7 +71,7 @@ public class DrawsanaView: UIView {
     return DrawingOperationStack(drawing: drawing)
   }()
   
-  private var toolOperationContext: ToolOperationContext {
+  public var toolOperationContext: ToolOperationContext {
     return ToolOperationContext(
       drawing: drawing,
       operationStack: operationStack,
@@ -218,7 +218,7 @@ public class DrawsanaView: UIView {
     
     addGestureRecognizer(immediatePanGestureRecognizer)
     addGestureRecognizer(pinchGestureRecognizer)
-    //addGestureRecognizer(rotationGestureRecognizer)
+    addGestureRecognizer(rotationGestureRecognizer)
   }
   
   public override func layoutSubviews() {
